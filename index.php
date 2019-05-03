@@ -1,10 +1,13 @@
 <?php
-
 include('config/config.php');
-include('lib/QueryGenerator.php');
+include('lib/DB.php');
 include('lib/ApiResult.php');
 include('lib/IoLib.php');
+include('lib/jwt.php');
 include('controller/router.php');
+
+
+
 
 
 //lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$request));

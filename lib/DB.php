@@ -14,9 +14,9 @@ class lib_DB
            $ColList='*';
         }
 
-          $sql="SELECT $ColList From ".$Query['table'];
+        echo  $sql="SELECT $ColList From ".$Query['table'];
           $result_Array= $DBC->query($sql);
-
+//$result
 
        if ($result_Array->num_rows > 0)
        {

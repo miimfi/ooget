@@ -1,5 +1,5 @@
 <?php
-global $dbconfig, $ServerRequestLog, $ServerResponseLog, $ServerQuaryLog, $ErrorLog, $request, $db, $ServerURL;
+global $dbconfig, $ServerRequestLog, $ServerResponseLog, $ServerQuaryLog, $ErrorLog, $request, $db, $ServerURL, $JWTKey, $JWTExpirationTime;
 
 // DB Config
 $dbconfig['db_server'] = '127.0.0.1';
@@ -14,6 +14,10 @@ $ServerRequestLog=0;
 $ServerResponseLog=0;
 $ServerQuaryLog=0;
 $ServerErrorLog=0;
+
+// JWT token Expiration Time
+$JWTExpireTime=86400; // 1 days
+$JWTKey='MIICXQIBAAKBgQCqtM24cU6wcO6wn0jk2S3KNyWJzXurkMzmCnvDxLZ5H5wzR/Yx'; // key for JWT
 
 $ServerURL="http://127.0.0.1/ooget/";
 error_reporting(E_ALL);

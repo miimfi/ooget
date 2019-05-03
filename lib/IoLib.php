@@ -3,7 +3,8 @@ function frame_request(){
   global $request;
   foreach($_REQUEST as $key => $val){
          if($val !=''){
-                      $request[$key] = stripslashes($val);
+           //$this->email=htmlspecialchars(strip_tags($this->email));
+                      $request[$key] = htmlspecialchars($val);
             }else
                        $request[$key] = $val;
         }

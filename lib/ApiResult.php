@@ -37,6 +37,18 @@ class lib_ApiResult
       $result=json_encode($data);
       echo $result;
     }
+    elseif($data=='error')
+    {
+      header("Access-Control-Allow-Origin:".$ServerURL);
+      header("Content-Type: application/json; charset=UTF-8");
+      header("Access-Control-Allow-Methods: POST");
+      header("Access-Control-Max-Age: 3600");
+      header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+      echo "500 BAD REQUEST";
+      ServerErrorLog("500 BAD REQUEST");
+      $result=json_encode(array('status'=>500,'result'=>'Server error'));
+      echo $result;
+    }
     else {
       header("HTTP/1.1 400 BAD REQUEST");
       echo "400 BAD REQUEST";
