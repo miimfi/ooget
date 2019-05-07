@@ -5,8 +5,9 @@ function frame_request(){
          if($val !=''){
            //$this->email=htmlspecialchars(strip_tags($this->email));
                       $request[$key] = htmlspecialchars($val);
-            }else
-                       $request[$key] = $val;
+            }else{
+                       $request[$key] = null;
+            }
         }
         RequestLog();
 }
@@ -14,7 +15,6 @@ function RequestLog($path=0)
 {
     global $request, $ServerRequestLog;
   // Program to display URL of current page.
-
 if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
     $link = "https";
 else

@@ -5,7 +5,7 @@
 include('controller/Users.php');
 $AuthResult=controller_Users::Authentication();
 
-if($AuthResult || ($request['mode']=='Login' && $request['module']=='Users')){
+if($AuthResult || ($request['mode']=='Login' && $request['module']=='Users') || ($request['mode']=='CreateJobseeker' && $request['module']=='Jobseekers') ){
   $Modules;
   if($request['module'])
   {

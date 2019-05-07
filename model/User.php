@@ -47,11 +47,5 @@ class model_user
     $sqldata =$sql->get_result()->fetch_assoc();
     return $sqldata;
   }
-
-  function CreateCompany()
-  {
-
-  }
-
 }
  ?>

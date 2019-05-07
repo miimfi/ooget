@@ -1,5 +1,5 @@
 <?php
-global $dbconfig, $ServerRequestLog, $ServerResponseLog, $ServerQuaryLog, $ErrorLog, $request, $db, $ServerURL, $JWTKey, $JWTExpirationTime;
+global $dbconfig, $ServerRequestLog, $ServerResponseLog, $ServerQuaryLog, $ErrorLog, $request, $db, $ServerURL, $JWTKey, $JWTExpirationTime, $SecretKey, $Recaptcha;
 
 // DB Config
 $dbconfig['db_server'] = '127.0.0.1';
@@ -18,6 +18,11 @@ $ServerErrorLog=0;
 // JWT token Expiration Time
 $JWTExpireTime=86400; // 1 days
 $JWTKey='MIICXQIBAAKBgQCqtM24cU6wcO6wn0jk2S3KNyWJzXurkMzmCnvDxLZ5H5wzR/Yx'; // key for JWT
+
+// google recapcha
+//$SiteKey="6Lc2L6IUAAAAAG0I8PuARFQibZcDRuU9vM8NPrG1";
+$SecretKey="6Lc2L6IUAAAAALMeBGsnTHy12WC_maY82MJ4nkiE";
+$Recaptcha='ON'; // on / off
 
 $ServerURL="http://127.0.0.1/ooget/";
 error_reporting(E_ALL);
