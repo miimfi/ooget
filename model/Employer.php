@@ -13,13 +13,24 @@ class model_Employer
     return $insertId;
   }
 
-  function CheckCompanyExist($companycode,$uen)
+  function CheckCompanyExist($uen)
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    $sql = $DBC->prepare("SELECT `uen` FROM company WHERE uen=?");
+    $sql->bind_param("s", $uen);
+    $sql->execute();
+    $sqldata =$sql->get_result()->fetch_assoc();
+    return $sqldata;
+  }
+
+  function CheckCompanyCodeExist($companycode)
   {
     global $request;
     global $db;
     $DBC=$db::dbconnect();
-    $sql = $DBC->prepare("SELECT `companycode` FROM company WHERE companycode=? or uen=?");
-    $sql->bind_param("ss", $companycode,$uen);
+    $sql = $DBC->prepare("SELECT `companycode` FROM company WHERE companycode=?");
+    $sql->bind_param("s", $companycode);
     $sql->execute();
     $sqldata =$sql->get_result()->fetch_assoc();
     return $sqldata;
@@ -63,6 +74,10 @@ class model_Employer
   {
     global $db;
     $DBC=$db::dbconnect();
+    if(!is_numeric($id))
+    {
+      return false;
+    }
     if($id>0)
     {
       $sql = $DBC->prepare("SELECT * FROM `company` WHERE id=?");

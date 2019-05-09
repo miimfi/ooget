@@ -3,9 +3,16 @@
 // controller file automaticaly include based on REQUEST params ("?module=<modulename>")
 // get posted data
 include('controller/Users.php');
-$AuthResult=controller_Users::Authentication();
+$AuthResult=lib_jwt::Authentication();
 
-if($AuthResult || ($request['mode']=='Login' && $request['module']=='Users') || ($request['mode']=='CreateJobseeker' && $request['module']=='Jobseekers') ){
+
+if($CurrentUser->access=='Jobseeker')
+{
+  $request['module']='Jobseeker';
+}
+
+if($AuthResult || $request['mode']=='Login' || $request['mode']=='CreateJobseeker' || $request['mode']=='CheckCompanyUenExist' || $request['mode']=='CheckEmail')
+{
   $Modules;
   if($request['module'])
   {
@@ -14,7 +21,7 @@ if($AuthResult || ($request['mode']=='Login' && $request['module']=='Users') || 
 
   if (file_exists($Modules))
   {
-          if($request['module']!='Users')
+        if($request['module']!='Users')
           {
             include $Modules;
           }
@@ -52,4 +59,5 @@ function RequestNotFound()
   $result=array('status'=>400,'result'=>'Request not found!','request'=>$request);
   lib_ApiResult::JsonEncode($result);
 }
+
  ?>

@@ -1,28 +1,25 @@
 <?php
 class model_user
 {
-  function UserAuthentication()
+  function Login()
   {
     global $request;
     global $db;
     $DBC=$db::dbconnect();
-    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `email`, `role`, `companyid`, `city`, `state`, `country` FROM users WHERE email =? and password =? ");
+    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `type` as access,`email`, `role`, `companyid`, `city`, `state`, `country` FROM users WHERE email =? and password =? ");
     $sql->bind_param("ss", $request['email'],$request['pass']);
     $sql->execute();
     $sqldata =$sql->get_result()->fetch_assoc();
     if($sqldata['id'])
     {
-      echo $date = date('Y-m-d H:i:s');
+      $date = date('Y-m-d H:i:s');
       $sql2 = $DBC->prepare("UPDATE `users` SET `lastlogin`=? WHERE  `id`=?");
       $sql2->bind_param("si", $date,$sqldata['id']);
       $sql2->execute();
     }
     return $sqldata;
   }
-  function UpdateAdmin()
-  {
 
-  }
 
   function CreateUser()
   {

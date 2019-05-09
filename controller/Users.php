@@ -3,43 +3,71 @@ include_once('model/User.php');
 use \Firebase\JWT\JWT;
 class controller_Users
 {
-/*
-  function __construct(argument)
+  function CheckEmail()
   {
-    // code...
-  }*/
-  function Authentication()
-  {
-    global $JWTKey, $CurrentUser;
-    if($_SERVER['HTTP_TOKEN'])
-    {
-      try {
-      $decoded = JWT::decode($_SERVER['HTTP_TOKEN'], $JWTKey, array('HS256'));
-      if($decoded->userdetails->email)
-        {
-          $CurrentUser=$decoded->userdetails;
-          return true;
-        }
-        else {
-          return false;
-        }
+    global $request;
+    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$^", $request['emailid'])){
+              lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
       }
-      catch(Exception $e) {
-          return false;
-        }
-
-    }
-  //  return true;
+      else
+      {
+          $result=model_User::CheckEmail($request['emailid']);
+          if(!is_array($result))
+          {
+            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'email id not found'));
+          } else {
+            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'email id found'));
+          }
+      }
   }
+
+  function ImageUpload()
+  {
+    global $CurrentUser;
+    $target_dir = "media/profile/user/";
+    $realfilename=explode('.',basename($_FILES["fileToUpload"]["name"]));
+    $target_file = $target_dir.$CurrentUser->id.'.'.end($realfilename);
+    $uploadOk = true;
+    $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+    // Check if image file is a actual image or fake image
+
+      $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
+      if($check !== false) {
+        move_uploaded_file($_FILES["fileToUpload"]["tmp_name"],$target_file);
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload'));
+      } else {
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'failure to upload'));
+      }
+
+  }
+
+  function ImageDelete()
+  {
+    global $CurrentUser;
+    $target_dir = "media/profile/user/";
+    $target_file = $target_dir.$CurrentUser->id.'.*';
+    foreach (glob($target_file) as $fileName) {
+     if(unlink($fileName))
+     {
+       $delete=true;
+     }
+    }
+      if(!$delete) {
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'error'));
+      } else {
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'deleted'));
+      }
+  }
+
   function Login()
   {
-    $result=model_User::UserAuthentication();
+    $result=model_User::Login();
     global $JWTExpireTime,$JWTKey;
 
     if($result['email'])
     {
       $issuedAt = time();
-      $expirationTime = $issuedAt + $JWTExpireTime;  // jwt valid for 60 seconds from the issued time
+      $expirationTime = $issuedAt + $JWTExpireTime;
       $payload = array(
         'userdetails' => $result,
         'issuedAt' => $issuedAt,
@@ -54,6 +82,11 @@ class controller_Users
     else {
       lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'login failed'));
     }
+  }
+
+  function logout()
+  {
+
   }
 
   function CreateUser()
@@ -83,16 +116,6 @@ class controller_Users
         }else {
           lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Please fill all mandatory fields'));
         }
-    }
-  }
-
-  function CreateJobseeker()
-  {
-    if($request['firstname'] && $request['password'] && $request['role'] && $request['email'])
-    {
-      model_User::CreateAdmin();
-    }else {
-      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Please fill all mandatory fields'));
     }
   }
 

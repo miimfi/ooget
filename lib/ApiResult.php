@@ -33,7 +33,7 @@ class lib_ApiResult
         ServerErrorLog("400 BAD REQUEST");
       }
 
-
+      $data['success']=($data['status']==200?true:false);
       $result=json_encode($data);
       echo $result;
     }
@@ -46,7 +46,7 @@ class lib_ApiResult
       header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
       echo "500 BAD REQUEST";
       ServerErrorLog("500 BAD REQUEST");
-      $result=json_encode(array('status'=>500,'result'=>'Server error'));
+      $result=json_encode(array('status'=>500,'success'=>fale,'result'=>'Server error'));
       echo $result;
     }
     else {
