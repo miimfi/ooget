@@ -117,9 +117,10 @@ class controller_Jobseeker
   function UpdateJobseeker()
   {
     global $request,$CurrentUser;
-    if($CurrentUser->access=='Jobseeker')
+    if($CurrentUser->access!='admin')
     {
       $request['jobseekerid']=$CurrentUser->id;
+      unset($request['status']);
     }
 
     if($request['jobseekerid'])
@@ -130,6 +131,27 @@ class controller_Jobseeker
     else {
       lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Jobseeker ID is empty'));
     }
+  }
+
+  function DeleteJobseeker()
+  {
+    global $request;
+    isAdmin();
+    if($request['jobseekerid']>0)
+    {
+      $result=model_Jobseeker::DeleteJobseeker($request['jobseekerid']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'deleted'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'Invalid jobseeker ID / server error'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'Invalid jobseeker ID'));
+    }
+
   }
 
   function GetJobseeker()
@@ -155,6 +177,20 @@ class controller_Jobseeker
       lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'No data'));
     }
 
+  }
+
+  function FindJobseeker()
+  {
+    global $request;
+    isAdmin();
+    $result=model_Jobseeker::FindJobseeker($request['finddata']);
+    if($result)
+    {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>409,'result'=>'No data'));
+    }
   }
 
   function CheckEmail()

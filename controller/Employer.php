@@ -118,6 +118,20 @@ class controller_Employer
     }
   }
 
+  function FindEmployer()
+  {
+    global $request;
+    isAdmin();
+    $result=model_Employer::FindEmployer($request['finddata']);
+    if($result)
+    {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>409,'result'=>'No data'));
+    }
+  }
+
   function DeleteEmployer()
   {
     global $request;
@@ -125,7 +139,11 @@ class controller_Employer
     if($request['employerid'] && $isfound)
     {
       $result=model_Employer::DeleteEmployer($request['employerid']);
-      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'deleted'));
+      if($result)
+      {lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'deleted'));}
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'Invalid id'));
+      }
     }
     else {
       lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Employer ID not found'));

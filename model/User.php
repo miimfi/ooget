@@ -20,6 +20,22 @@ class model_user
     return $sqldata;
   }
 
+  function DeleteUser($id,$companyid='')
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    if($companyid>0)
+    {
+      $sql=$DBC->prepare("DELETE FROM `users` WHERE  `id`=? and `companyid`=?");
+      $sql->bind_param("ii", $id,$companyid);
+    }
+    else {
+      $sql=$DBC->prepare("DELETE FROM `users` WHERE  `id`=?");
+      $sql->bind_param("i", $id);
+    }
+    $sql->execute();
+    return $sql->affected_rows;
+  }
 
   function CreateUser()
   {
@@ -27,7 +43,7 @@ class model_user
     global $db;
     $DBC=$db::dbconnect();
     $sql=$DBC->prepare("INSERT INTO `users` (`firstname`, `email`,`password`,`type`,`createdby`,`role`,`companyid`) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $sql->bind_param("ssssisi",$request['name'],$request['email'],$request['pass'],$request['type'],$CurrentUser->id,$request['role'],$request['companyid']);
+    $sql->bind_param("ssssisi",$request['name'],$request['email'],$request['password'],$request['type'],$CurrentUser->id,$request['role'],$request['companyid']);
     $sql->execute();
     $insertId=$sql->insert_id;
     return $insertId;
@@ -42,6 +58,58 @@ class model_user
     $sql->bind_param("s", $email);
     $sql->execute();
     $sqldata =$sql->get_result()->fetch_assoc();
+    return $sqldata;
+  }
+
+  function GetUserList($CompanyId='')
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    if($CompanyId>0)
+    {
+      $sql = $DBC->prepare("SELECT * FROM `users` WHERE companyid=?");
+      $sql->bind_param("i", $CompanyId);
+    }
+    else {
+      $sql = $DBC->prepare("SELECT * FROM `users`");
+    }
+
+    $sql->execute();
+    $result = $sql->get_result();
+    $num_of_rows = $result->num_rows;
+
+    if($num_of_rows>0)
+    {
+      while($row = $result->fetch_assoc()) {
+        unset($row['password']);
+        $sqldata[] = $row;
+      }
+    }
+    return $sqldata;
+  }
+
+  function GetUser($id='')
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    if($id>0)
+    {
+      $sql = $DBC->prepare("SELECT * FROM `users` WHERE id=?");
+      $sql->bind_param("i", $id);
+
+      $sql->execute();
+      $result = $sql->get_result();
+      $num_of_rows = $result->num_rows;
+
+      if($num_of_rows>0)
+      {
+        while($row = $result->fetch_assoc()) {
+          unset($row['password']);
+          $sqldata[] = $row;
+        }
+      }
+    }
+
     return $sqldata;
   }
 }

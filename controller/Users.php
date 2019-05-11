@@ -91,14 +91,32 @@ class controller_Users
 
   function CreateUser()
   {
-    global $request;
+    require_once('model/Employer.php');
+    global $request,$CurrentUser;
     if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$^", $request['email'])){
               lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
       }
       else {
-        if($request['name'] && $request['password'] && (($request['role'] && $request['type']!='admin')|| $request['type']=='admin') && $request['email'])
+        if($CurrentUser->access!='admin')
         {
-          $CheckEmail=model_User::CheckEmail($request['email']);
+          $request['companyid']=$CurrentUser->companyid;
+          if($request['type']=='admin')
+          {
+            lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'your not allow to create admin user, because your not OOGET admin'));
+          }
+        }
+        else {
+          $request['companyid']=0;
+        }
+        if($request['name'] && $request['password'] && (($request['companyid']>0 && $request['type']!='admin') || $request['type']=='admin') && $request['email'])
+        {
+          $CheckEmail=model_User::CheckEmail($request['email']); //check email id
+          $CheckEmployer=model_Employer::GetEmployer($request['companyid']);
+          if(!is_array($CheckEmployer))
+          {
+            // check if company is found
+            lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'company not found'));
+          }
           if(!$CheckEmail)
           {
             $result=model_User::CreateUser();
@@ -116,6 +134,87 @@ class controller_Users
         }else {
           lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Please fill all mandatory fields'));
         }
+    }
+  }
+
+
+  function GetUserList()
+  {
+    global $request,$CurrentUser;
+    if($CurrentUser->access!='admin')
+    {
+      $request['companyid']=$CurrentUser->companyid;
+      if($CurrentUser->access!='employer'  || $request['companyid']<1)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>403,'result'=>'your not allow to access'));
+      }
+    }
+
+    if($request['companyid']>0)
+    {
+      $result =model_User::GetUserList($request['companyid']);
+    }
+    else {
+      $result =model_User::GetUserList();
+    }
+    if(is_array($result))
+    {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>400,'result'=>$result));
+    }
+
+
+  }
+
+  function GetUser()
+  {
+    global $CurrentUser;
+    $result =model_User::GetUser($CurrentUser->id);
+    if(is_array($result))
+    {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>400,'result'=>$result));
+    }
+  }
+
+  function DeleteUser()
+  {
+    global $request,$CurrentUser;
+    if($CurrentUser->access!='admin' && $CurrentUser->access!='employer' )
+    {
+      lib_ApiResult::JsonEncode(array('status'=>403,'result'=>'your not allow to delete'));
+    }
+
+    if($CurrentUser->id==$request['userid'])
+    {
+      lib_ApiResult::JsonEncode(array('status'=>403,'result'=>'your not allow to delete your account'));
+    }
+
+    if($request['userid']>0)
+    {
+      if($CurrentUser->access!='admin')
+      {
+          if($CurrentUser->companyid>0)
+          {
+            $request['companyid']=$CurrentUser->companyid;
+          }
+          else {
+            lib_ApiResult::JsonEncode(array('status'=>403,'result'=>'your not allow to delete'));
+          }
+      }
+      $result =model_User::DeleteUser($request['userid'],$request['companyid']);
+      if($result)
+      {lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'deleted'));}
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'Invalid user id'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'Invalid user id'));
     }
   }
 

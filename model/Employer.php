@@ -66,26 +66,43 @@ class model_Employer
     $sql=$DBC->prepare("DELETE FROM `company` WHERE  `id`=?");
     $sql->bind_param("i", $id);
     $sql->execute();
-    return true;
-
+    return $sql->affected_rows;
   }
 
-  function GetEmployer($id=0)
+  function FindEmployer($data)
   {
     global $db;
+    $data='%'.$data.'%';
     $DBC=$db::dbconnect();
-    if(!is_numeric($id))
+    $sql = $DBC->prepare("SELECT * FROM `company` WHERE name LIKE? or uen LIKE ? or companycode LIKE ? or city LIKE ? or country LIKE ? or email LIKE ?");
+    $sql->bind_param("ssssss", $data,$data,$data,$data,$data,$data);
+    $sql->execute();
+    $result = $sql->get_result();
+    $num_of_rows = $result->num_rows;
+    if($num_of_rows>0)
     {
-      return false;
+      while($row = $result->fetch_assoc()) {
+        $sqldata[] = $row;
+      }
     }
-    if($id>0)
+    return $sqldata;
+}
+    function GetEmployer($id=0)
     {
-      $sql = $DBC->prepare("SELECT * FROM `company` WHERE id=?");
-      $sql->bind_param("i", $id);
-    }
-    else {
-      $sql = $DBC->prepare("SELECT * FROM `company`");
-    }
+      global $db;
+      $DBC=$db::dbconnect();
+      if(!is_numeric($id))
+      {
+        return false;
+      }
+      if($id>0)
+      {
+        $sql = $DBC->prepare("SELECT * FROM `company` WHERE id=?");
+        $sql->bind_param("i", $id);
+      }
+      else {
+        $sql = $DBC->prepare("SELECT * FROM `company`");
+      }
 
     $sql->execute();
     $result = $sql->get_result();
@@ -97,7 +114,6 @@ class model_Employer
       }
     }
     return $sqldata;
-
   }
 
 }

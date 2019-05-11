@@ -60,4 +60,12 @@ function RequestNotFound()
   lib_ApiResult::JsonEncode($result);
 }
 
+function isAdmin()
+{
+  global $CurrentUser;
+  if($CurrentUser->access!='admin')
+  {
+    lib_ApiResult::JsonEncode(array('status'=>409,'result'=>'access denied'));
+  }
+}
  ?>

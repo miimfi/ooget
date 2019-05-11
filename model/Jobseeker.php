@@ -71,6 +71,38 @@ class model_Jobseeker
 
   }
 
+  function DeleteJobseeker($id)
+  {
+
+    global $db;
+    $DBC=$db::dbconnect();
+    $sql=$DBC->prepare("DELETE FROM `jobseeker` WHERE  `id`=?");
+    $sql->bind_param("i", $id);
+    $sql->execute();
+    return $sql->affected_rows;
+  }
+
+  function FindJobseeker($data)
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    $data='%'.$data.'%';
+    $sql = $DBC->prepare("SELECT * FROM `jobseeker` WHERE `firstname` LIKE ? or `lastname` LIKE ? or `email` LIKE ? or `country` LIKE ? or `city` LIKE ?");
+    $sql->bind_param("sssss", $data, $data, $data, $data, $data);
+    $sql->execute();
+    $result = $sql->get_result();
+    $num_of_rows = $result->num_rows;
+    if($num_of_rows>0)
+    {
+      while($row = $result->fetch_assoc()) {
+        unset($row['password']);
+        $sqldata[] = $row;
+      }
+    }
+    return $sqldata;
+
+  }
+
   function UpdateJobseeker()
   {
     global $db,$request;
@@ -98,8 +130,8 @@ class model_Jobseeker
       if(is_array($getdetail))
       {
       $DBC=$db::dbconnect();
-      $sql=$DBC->prepare("UPDATE `jobseeker` SET `firstname`=?, `lastname`=?, `password`=?, `country`=?, `dob`=?, `timezone`=?, `theme`=?, `phone`=?, `mobile`=?, `address1`=?, `address2`=?, `city`=?, `imgpath`=? WHERE  `id`=?");
-      $sql->bind_param("ssssssissssssi", $request['firstname'], $request['lastname'], $request['password'], $request['country'], $request['dob'], $request['timezone'], $request['theme'], $request['phone'], $request['mobile'], $request['address1'], $request['address2'], $request['city'], $request['imgpath'],  $request['jobseekerid']);
+      $sql=$DBC->prepare("UPDATE `jobseeker` SET `firstname`=?, `lastname`=?, `password`=?, `country`=?, `dob`=?, `timezone`=?, `theme`=?, `phone`=?, `mobile`=?, `address1`=?, `address2`=?, `city`=?, `imgpath`=? ,`status`=? WHERE  `id`=?");
+      $sql->bind_param("ssssssisssssssi", $request['firstname'], $request['lastname'], $request['password'], $request['country'], $request['dob'], $request['timezone'], $request['theme'], $request['phone'], $request['mobile'], $request['address1'], $request['address2'], $request['city'], $request['imgpath'], $request['status'],  $request['jobseekerid']);
       $sql->execute();
       return "updated";
       }
