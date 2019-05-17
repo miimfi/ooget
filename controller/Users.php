@@ -6,17 +6,17 @@ class controller_Users
   function CheckEmail()
   {
     global $request;
-    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$^", $request['emailid'])){
+    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$^", $request['email'])){
               lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
       }
       else
       {
-          $result=model_User::CheckEmail($request['emailid']);
+          $result=model_User::CheckEmail($request['email']);
           if(!is_array($result))
           {
             lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'email id not found'));
           } else {
-            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'email id found'));
+            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'email id found'));
           }
       }
   }
@@ -34,7 +34,10 @@ class controller_Users
       $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
       if($check !== false) {
         move_uploaded_file($_FILES["fileToUpload"]["tmp_name"],$target_file);
-        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload'));
+        $result=model_User::Imagepathupdate($CurrentUser->id,$target_file);
+      //$result=true;
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload','imagepath'=>$target_file));
+
       } else {
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'failure to upload'));
       }
@@ -55,6 +58,7 @@ class controller_Users
       if(!$delete) {
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'error'));
       } else {
+        $result=model_User::Imagepathupdate($CurrentUser->id,$target_file);
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'deleted'));
       }
   }
@@ -119,7 +123,7 @@ class controller_Users
           }
           if(!$CheckEmail)
           {
-            $result=model_User::CreateUser();
+            $result=model_User::CreateUser($request);
             if($result>0)
             {
               lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'User Created'));

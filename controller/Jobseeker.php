@@ -23,6 +23,7 @@ class controller_Jobseeker
         $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
         if($check !== false) {
           move_uploaded_file($_FILES["fileToUpload"]["tmp_name"],$target_file);
+          $result=model_Jobseeker::Imagepathupdate($CurrentUser->id,$target_file);
           lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload'));
         } else {
           lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'failure to upload'));
@@ -48,6 +49,7 @@ class controller_Jobseeker
       if(!$delete) {
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'Error'));
       } else {
+        $result=model_Jobseeker::Imagepathupdate($CurrentUser->id,$target_file);
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'deleted'));
       }
   }
@@ -126,12 +128,45 @@ class controller_Jobseeker
     if($request['jobseekerid'])
     {
       $result=model_Jobseeker::UpdateJobseeker();
-      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      /*if($result && $request['account_no'])
+      {
+        $result=model_Jobseeker::UpdateJobseekerBankDetail($request['jobseekerid'],$request['bank_id'],$request['branch_code'],$request['account_no']);
+      }*/
+      if($result>0)
+      {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>304,'result'=>'Update error'));
+      }
+
     }
     else {
       lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Jobseeker ID is empty'));
     }
   }
+
+  function UpdateJobseekerStatus()
+  {
+    global $request;
+    isAdmin();
+    if($request['jobseekerid'])
+    {
+      $result=model_Jobseeker::UpdateJobseekerStatus($request['jobseekerid'],$request['status']);
+      if($result>0)
+      {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'status changed'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Update error'));
+      }
+
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Jobseeker ID is empty'));
+    }
+  }
+
 
   function DeleteJobseeker()
   {

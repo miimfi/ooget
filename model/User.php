@@ -6,8 +6,8 @@ class model_user
     global $request;
     global $db;
     $DBC=$db::dbconnect();
-    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `type` as access,`email`, `role`, `companyid`, `city`, `state`, `country` FROM users WHERE email =? and password =? ");
-    $sql->bind_param("ss", $request['email'],$request['pass']);
+    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `type` as access, `imgpath`,`email`, `role`, `companyid`, `city`, `state`, `country` FROM users WHERE email =? and password =? ");
+    $sql->bind_param("ss", $request['email'],$request['password']);
     $sql->execute();
     $sqldata =$sql->get_result()->fetch_assoc();
     if($sqldata['id'])
@@ -37,9 +37,9 @@ class model_user
     return $sql->affected_rows;
   }
 
-  function CreateUser()
+  function CreateUser($request)
   {
-    global $CurrentUser,$request;
+    global $CurrentUser;
     global $db;
     $DBC=$db::dbconnect();
     $sql=$DBC->prepare("INSERT INTO `users` (`firstname`, `email`,`password`,`type`,`createdby`,`role`,`companyid`) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -47,6 +47,16 @@ class model_user
     $sql->execute();
     $insertId=$sql->insert_id;
     return $insertId;
+  }
+
+  function Imagepathupdate($id,$ImagePath)
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    $sql2 = $DBC->prepare("UPDATE `users` SET `imgpath`=? WHERE  `id`=?");
+    $sql2->bind_param("si", $ImagePath,$id);
+    $sql2->execute();
+    return $sql->affected_rows;
   }
 
   function CheckEmail($email)
@@ -105,7 +115,7 @@ class model_user
       {
         while($row = $result->fetch_assoc()) {
           unset($row['password']);
-          $sqldata[] = $row;
+          $sqldata = $row;
         }
       }
     }

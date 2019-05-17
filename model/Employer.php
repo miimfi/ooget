@@ -4,13 +4,20 @@ class model_Employer
 {
   function CreateEmployer()
   {
+    include_once('model/User.php');
     global $CurrentUser,$request,$db;
     $DBC=$db::dbconnect();
     $sql=$DBC->prepare("INSERT INTO `company` (`name`, `profile`,`uen`,`companycode`,`industry`,`country`,`createby`) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $sql->bind_param("ssssiss",$request['name'],$request['profile'],$request['uen'],$request['companycode'],$request['industry'],$request['country'],$CurrentUser->id);
+    $sql->bind_param("ssssiss",$request['companyname'],$request['profile'],$request['uen'],$request['companycode'],$request['industry'],$request['country'],$CurrentUser->id);
     $sql->execute();
     $insertId=$sql->insert_id;
+
+//$request['name'],$request['email'],$request['password'],$request['type'],$CurrentUser->id,$request['role'],$request['companyid']
+    $userdetails= array('name'=>$request['username'],'email'=>$request['useremail'],'password'=>$request['password'],'type'=>'employer','companyid'=>$insertId);
+    $userInsertId=model_user::CreateUser($userdetails);
+
     return $insertId;
+
   }
 
   function CheckCompanyExist($uen)
@@ -26,8 +33,7 @@ class model_Employer
 
   function CheckCompanyCodeExist($companycode)
   {
-    global $request;
-    global $db;
+    global $request,$db;
     $DBC=$db::dbconnect();
     $sql = $DBC->prepare("SELECT `companycode` FROM company WHERE companycode=?");
     $sql->bind_param("s", $companycode);
@@ -71,6 +77,7 @@ class model_Employer
 
   function FindEmployer($data)
   {
+
     global $db;
     $data='%'.$data.'%';
     $DBC=$db::dbconnect();
@@ -86,7 +93,7 @@ class model_Employer
       }
     }
     return $sqldata;
-}
+  }
     function GetEmployer($id=0)
     {
       global $db;
@@ -97,11 +104,11 @@ class model_Employer
       }
       if($id>0)
       {
-        $sql = $DBC->prepare("SELECT * FROM `company` WHERE id=?");
+        $sql = $DBC->prepare("SELECT company.*, industry.`name` AS `industryname`   FROM `company` INNER JOIN industry ON industry.id=company.industry WHERE company.id=?");
         $sql->bind_param("i", $id);
       }
       else {
-        $sql = $DBC->prepare("SELECT * FROM `company`");
+        $sql = $DBC->prepare("SELECT company.*, industry.`name` AS `industryname`   FROM `company` INNER JOIN industry ON industry.id=company.industry");
       }
 
     $sql->execute();

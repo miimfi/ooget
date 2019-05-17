@@ -81,7 +81,7 @@ class controller_Employer
   function CreateEmployer()
   {
     global $request;
-    if($request['name'] && $request['profile'] && $request['uen'] && $request['industry'] && $request['country'])
+    if($request['companyname'] && $request['profile'] && $request['uen'] && $request['industry'] && $request['country'] && $request['username'] && $request['useremail'] && $request['password'])
     {
       $CheckCompanyExist=model_Employer::CheckCompanyExist($request['uen']);
       //$CheckCompanyCodeExist=model_Employer::CheckCompanyExist($request['companycode'],$request['uen']);

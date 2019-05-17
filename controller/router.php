@@ -5,13 +5,33 @@
 include('controller/Users.php');
 $AuthResult=lib_jwt::Authentication();
 
+if(!$request)
+{
+  //if(!$request && $AuthResult)
+  $actual_link =$_SERVER[REQUEST_URI];
+  $imgpath_tmp=explode("media",$actual_link);
+  if($imgpath_tmp[1])
+  {
+  $imgpath='./media'.$imgpath_tmp[1];
+  if(file_exists($imgpath))
+  {
+    $im = file_get_contents('./media'.$imgpath[1]);
+  }
+  else {
+    $im = file_get_contents('./media/nouser.png');
+  }
+  header("Content-type: image/jpeg");
+  echo $im;
+  die();
+  }
+}
 
 if($CurrentUser->access=='Jobseeker')
 {
   $request['module']='Jobseeker';
 }
 
-if($AuthResult || $request['mode']=='Login' || $request['mode']=='CreateJobseeker' || $request['mode']=='CheckCompanyUenExist' || $request['mode']=='CheckEmail')
+if($AuthResult || $request['mode']=='CreateEmployer' || $request['mode']=='Login' || $request['mode']=='CreateJobseeker' || $request['mode']=='CheckCompanyUenExist' || $request['mode']=='CheckEmail')
 {
   $Modules;
   if($request['module'])

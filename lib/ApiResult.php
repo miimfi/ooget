@@ -9,12 +9,15 @@ class lib_ApiResult
       // required headers
       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
       header_remove();
-      global $ServerURL;
-      header("Access-Control-Allow-Origin:".$ServerURL);
+      global $ServerURL,$request;
+      header("Access-Control-Allow-Origin:*");
       header("Content-Type: application/json; charset=UTF-8");
-      header("Access-Control-Allow-Methods: POST");
+      header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
       header("Access-Control-Max-Age: 3600");
       header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+
+    //  header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method, Access-Control-Allow-Origin");
+
 /*
   200 	OK
   201 	Created
@@ -72,11 +75,25 @@ class lib_ApiResult
         }
 
 
-      $data['success']=($data['status']==200?true:false);
+      if(!array_key_exists('success',$data))
+        {
+            $data['success']=($data['status']==200?true:false);
+        }
+        /*
+      if(is_array($data['Check_empty_col']))
+      {
+        foreach ($data['Check_empty_col'] as $key => $value) {
+          if($request[$value])
+          {
+           unset($data['Check_empty_col'][$key]);
+          }
+        }
+      }*/
       $result=json_encode($data);
       echo $result;
+      die();
     }
-    elseif($data=='error')
+    else if($data=='error')
     {
       header("Access-Control-Allow-Origin:".$ServerURL);
       header("Content-Type: application/json; charset=UTF-8");
