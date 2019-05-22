@@ -115,7 +115,7 @@ class model_Job
           $offered_on=$applied_on;
         }
 
-        $sql=$DBC->prepare("INSERT INTO `job_Applied` (`job_id`, `jobseeker_id`, `applied_on`, `offered_on`) VALUES (?, ?, ?, ?, )");
+        $sql=$DBC->prepare("INSERT INTO `job_Applied` (`job_id`, `jobseeker_id`, `applied_on`, `offered_on`) VALUES (?, ?, ?, ? )");
         $sql->bind_param("iiss", $jobDetail['id'],$JobseekerId,$applied_on,$offered_on);
         $sql->execute();
         $insertId=$sql->insert_id;
@@ -125,7 +125,6 @@ class model_Job
           $JobAccept_status=model_Job::JobAccept($insertId);
 
         }
-
         return $insertId;
       }
       else {
@@ -133,22 +132,77 @@ class model_Job
       }
     }
 
-    function JobAccept($job_Applied)
+    function JobAccept($job_Applied_id)
     {
+      global $db;
+      $accept_on=date("Y-m-d H:i:s");
+      $DBC=$db::dbconnect();
+      $sql=$DBC->prepare("SELECT job_Applied.id, job_Applied.job_id, job_Applied.jobseeker_id, job_list.`from`, job_list.`to`, job_list.`work_days_type`, job_list.pax_total, job_list.required FROM job_Applied
+            INNER JOIN job_list ON job_list.id=job_Applied.job_id INNER JOIN jobseeker ON jobseeker.id=job_Applied.jobseeker_id
+            WHERE job_Applied.offer_accepted IS NULL AND job_Applied.offer_rejected IS NULL AND job_Applied.offered_on IS NOT NULL AND job_list.recruitment_open=1 AND job_Applied.id=?");
+      $sql->bind_param("i", $job_Applied_id);
+      $sql->execute();
+      $result = $sql->get_result();
+      $num_of_rows = $result->num_rows;
+      if($num_of_rows>0)
+      {
+        while($row = $result->fetch_assoc()) {
+          $job_data= $row;
+        }
+      }
+    //  return $job_data;
+      if($job_data['id'])
+      {
+        //update job applied accepted time
+        $sql2=$DBC->prepare("UPDATE `job_Applied` SET `offer_accepted`=? WHERE  `id`=?");
+        $sql2->bind_param("si", $accept_on,$job_data['id']);
+        $sql2->execute();
+        $affected_job_Applied=$sql2->affected_rows;
+        // update job_list required
+        $required=$job_data['required']+1;
+        if($affected_job_Applied)
+        {
+          if($job_data['pax_total']>$required)
+          {
+            $sql3=$DBC->prepare("UPDATE `job_list` SET `required`=? WHERE  `id`=?");
+            $sql3->bind_param("ii", $required,$job_data['job_id']);
 
-      $day;
+          }
+          else {
+            $recruitment_open=0;
+            $sql3=$DBC->prepare("UPDATE `job_list` SET `required`=?, `recruitment_open`=? WHERE  `id`=?");
+            $sql3->bind_param("iii", $required,$recruitment_open,$job_data['job_id']);
+          }
 
-      job_id,job_seeker_id,$date
 
-      $sql="SELECT job_Applied.job_id, job_Applied.jobseeker_id, job_list.`from`, job_list.`to`, job_list.`work_days_type`, job_list.pax_total, job_list.required
-FROM job_Applied
-INNER JOIN job_list ON job_list.id=job_Applied.job_id
-INNER JOIN jobseeker ON jobseeker.id=job_Applied.jobseeker_id
-WHERE job_Applied.offer_accepted IS NULL AND
-job_Applied.offer_rejected IS NULL AND
-job_Applied.offered_on IS NOT NULL AND job_list.recruitment_open=1 AND job_Applied.id=?
-";
-      //CreateTimeSheet($data);
+          $sql3->execute();
+          $affected_joblist=$sql3->affected_rows;
+        }
+
+
+      }
+      else {
+        return false;
+      }
+      echo "test fsdfsdfsdf";
+      print_r($job_data);
+      //$data['job_id'], $data['job_seeker_id'],  $data['date'], $data['day']
+      $earlier = new DateTime($job_data['from']);
+      $later = new DateTime($job_data['to']);
+      $no_of_days = $later->diff($earlier)->format("%a");
+      for ($i=0; $i <$no_of_days ; $i++) {
+        if($i==0)
+        {
+          $date=$job_data['from'];
+        }
+        else {
+          $date=date('Y-m-d',strtotime($job_data['from'] . "+".$i." days"));
+        }
+        echo $job_data['job_id']."=".$job_data['jobseeker_id']."=".$date;
+        $is_timesheet=model_Job::CreateTimeSheet($job_data['job_id'],$job_data['jobseeker_id'],$date);
+      }
+
+      return $is_timesheet;
     }
 
 
@@ -156,19 +210,21 @@ job_Applied.offered_on IS NOT NULL AND job_list.recruitment_open=1 AND job_Appli
     {
       global $db;
       $DBC=$db::dbconnect();
+      //echo $JobseekerId.$jobid;
       $select_query="SELECT job_Applied.*, job_list.project_name, job_list.job_name, job_list.department, job_list.`status` AS job_status, job_list.recruitment_open, jobseeker.firstname from `job_Applied` INNER JOIN job_list ON job_list.id=job_Applied.job_id INNER JOIN jobseeker ON jobseeker.id=job_Applied.jobseeker_id";
       if($JobseekerId>0 && $jobid>0)
       {
-        $sql = $DBC->prepare($select_query." WHERE `jobseeker_id`=? AND `job_id`=? AND `deleted`!=1");
+        $sql = $DBC->prepare($select_query." WHERE job_Applied.`jobseeker_id`=? AND job_Applied.`job_id`=? AND job_Applied.`deleted`!=1");
+
         $sql->bind_param("ii", $JobseekerId,$jobid);
       }
       else if ($JobseekerId>0 && !$jobid) {
-        $sql = $DBC->prepare($select_query." WHERE `jobseeker_id`=? AND `deleted`!=1");
+        $sql = $DBC->prepare($select_query." WHERE job_Applied.`jobseeker_id`=? AND job_Applied.`deleted`!=1");
         $sql->bind_param("i", $JobseekerId);
       }
       else if(!$JobseekerId && $jobid>0)
       {
-        $sql = $DBC->prepare($select_query." WHERE `job_id`=? AND `deleted`!=1");
+        $sql = $DBC->prepare($select_query." WHERE job_Applied.`job_id`=? AND job_Applied.`deleted`!=1");
         $sql->bind_param("i", $jobid);
       }
       else {
@@ -193,18 +249,17 @@ job_Applied.offered_on IS NOT NULL AND job_list.recruitment_open=1 AND job_Appli
       return true;
     }
 
-    function CreateTimeSheet($data)
+    function CreateTimeSheet($jobid,$jobseekerid,$date)
     {
+
       global $db;
+      $day=date("D",strtotime($date));
       $DBC=$db::dbconnect();
-      $sql=$DBC->prepare("INSERT INTO `time_sheet` (`job_id`, `job_seeker_id`, `date`, `day`, `ot_1_salary`, `ot_2_salary`, `salary`, `salary_total`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-      $sql->bind_param("iissiiii", $data['job_id'], $data['job_seeker_id'],  $data['date'], $data['day'], $data['ot_1_salary'], $data['ot_2_salary'], $data['salary'], $data['salary_total']);
+      $sql=$DBC->prepare("INSERT INTO `time_sheet` (`job_id`, `job_seeker_id`, `date`, `day`) VALUES (?, ?, ?, ?)");
+      $sql->bind_param("iiss",  $jobid, $jobseekerid, $date, $day);
       $sql->execute();
       $insertId=$sql->insert_id;
-      $jobid=$insertId;
-      $breaklist=$request['break'];
-      ;
-      return true;
+      return $insertId;
     }
 
 
