@@ -26,8 +26,9 @@ if(!$request)
   }
 }
 
-if($CurrentUser->access=='Jobseeker')
+if($CurrentUser->access=='Jobseeker' )
 {
+
   $request['module']='Jobseeker';
 }
 

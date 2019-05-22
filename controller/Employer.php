@@ -97,11 +97,11 @@ class controller_Employer
         }
       }
       else {
-        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Company code / UEN already exist'));
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Company code / UEN already exist'));
       }
     }
     else {
-      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Please fill all mandatory fields'));
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Please fill all mandatory fields'));
     }
 
   }

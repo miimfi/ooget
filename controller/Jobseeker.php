@@ -26,11 +26,11 @@ class controller_Jobseeker
           $result=model_Jobseeker::Imagepathupdate($CurrentUser->id,$target_file);
           lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload'));
         } else {
-          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'failure to upload'));
+          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'failure to upload'));
         }
     }
     else {
-      lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'jobseeker id not found'));
+      lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'jobseeker id not found'));
     }
 
   }
@@ -47,7 +47,7 @@ class controller_Jobseeker
      }
     }
       if(!$delete) {
-        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'Error'));
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'Error'));
       } else {
         $result=model_Jobseeker::Imagepathupdate($CurrentUser->id,$target_file);
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'deleted'));
@@ -61,11 +61,11 @@ class controller_Jobseeker
     $Recaptcha=recaptcha($ClientKey);
     if(!$Recaptcha=='success')
     {lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'recaptcha failed'));}
-    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$^", $request['email'])){
+    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,5})$^", $request['email'])){
               lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
       }
       else {
-    if($request['name'] && $request['email'] && $request['pass'] && $request['country'] && $Recaptcha=='success')
+    if($request['name'] && $request['email'] && $request['password'] && $request['country'] && $Recaptcha=='success')
     {
       $CheckEmail=model_Jobseeker::CheckEmail($request['email']);
       if(!$CheckEmail)
@@ -231,19 +231,88 @@ class controller_Jobseeker
   function CheckEmail()
   {
     global $request;
-    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$^", $request['emailid'])){
+    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,5})$^", $request['email'])){
               lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
       }
       else
       {
-          $result=model_Jobseeker::CheckEmail($request['emailid']);
+          $result=model_Jobseeker::CheckEmail($request['email']);
           if(!is_array($result))
           {
             lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'email id not found'));
           } else {
-            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'email id found'));
+            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'email id found'));
           }
       }
+  }
+
+  function GetAppliedList()
+  {
+    include_once('model/Job.php');
+    global $request,$CurrentUser;
+    $result=model_Job::GetAppliedList($CurrentUser->id,$request['jobid']);
+    if(is_array($result))
+    {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'no Job'));
+    }
+  }
+
+  function AppliedJob()
+  {
+    include_once('model/Job.php');
+    global $request, $CurrentUser;
+    if($CurrentUser->access=='Jobseeker' && $request['jobid'])
+    {
+      $result=model_Job::AppliedJob($CurrentUser->id,$request);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found / job closed'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid jobseeker / job id'));
+    }
+  }
+
+
+  function GetJobList()
+  {
+    include_once('model/Job.php');
+      global $request;
+      $result=model_Job::GetJobList($request['employerid']);
+      if(is_array($result))
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'no Job'));
+      }
+  }
+
+  function GetJobDetails()
+  {
+    include_once('model/Job.php');
+    global $request;
+    if($request['jobid']>0)
+    {
+      $result=model_Job::GetJobDetails($request['jobid']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found'));
+      }
+    }else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Invalid Input'));
+    }
+
   }
 
 }

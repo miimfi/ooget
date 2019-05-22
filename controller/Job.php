@@ -53,4 +53,58 @@ class controller_Job
 
   }
 
+  
+  function ChangeStatus()
+  {
+
+    global $request;
+    if($request['jobid'] && $request['status']!='')
+    {
+      $result=model_Job::ChangeStatus($request['jobid'], $request['status']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found / no change'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid jobseeker id or status'));
+    }
+  }
+
+  function GetAppliedList()
+  {
+    global $request;
+    $result=model_Job::GetAppliedList($request['jobseekerid'],$request['jobid']);
+    if(is_array($result))
+    {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'no Job'));
+    }
+  }
+
+  function ChangeRecruitmentOpen()
+  {
+
+    global $request;
+    if($request['jobid'] && $request['recruitmentopen']!='')
+    {
+      $result=model_Job::ChangeRecruitmentOpen($request['jobid'], $request['recruitmentopen']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found / no change'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid jobseeker id or status'));
+    }
+  }
+
 }

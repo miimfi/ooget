@@ -6,7 +6,7 @@ class controller_Users
   function CheckEmail()
   {
     global $request;
-    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$^", $request['email'])){
+    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,5})$^", $request['email'])){
               lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
       }
       else
@@ -39,7 +39,7 @@ class controller_Users
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload','imagepath'=>$target_file));
 
       } else {
-        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'failure to upload'));
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'failure to upload'));
       }
 
   }
@@ -56,7 +56,7 @@ class controller_Users
      }
     }
       if(!$delete) {
-        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>fales,'message'=>'error'));
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'error'));
       } else {
         $result=model_User::Imagepathupdate($CurrentUser->id,$target_file);
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'deleted'));

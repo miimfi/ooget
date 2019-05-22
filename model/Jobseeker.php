@@ -6,7 +6,7 @@ class model_Jobseeker
     global $request, $db;
     $DBC=$db::dbconnect();
     $sql=$DBC->prepare("INSERT INTO `jobseeker` (`firstname`, `email`, `password`, `country`) VALUES (?, ?, ?, ?)");
-    $sql->bind_param("ssss",$request['name'],$request['email'],$request['pass'],$request['country']);
+    $sql->bind_param("ssss",$request['name'],$request['email'],$request['password'],$request['country']);
     $sql->execute();
     $insertId=$sql->insert_id;
     return $insertId;
@@ -29,8 +29,8 @@ class model_Jobseeker
     global $request;
     global $db;
     $DBC=$db::dbconnect();
-    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `email` FROM jobseeker WHERE email =? and password =? ");
-    $sql->bind_param("ss", $request['email'],$request['pass']);
+    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `email`, `lastlogin`, `status` FROM jobseeker WHERE email =? and password =? ");
+    $sql->bind_param("ss", $request['email'],$request['password']);
     $sql->execute();
     $sqldata =$sql->get_result()->fetch_assoc();
     if($sqldata['id'])
@@ -133,7 +133,7 @@ class model_Jobseeker
   {
     global $db,$request;
     $DBC=$db::dbconnect();
-    if($request['jobseekerid'])
+      if($request['jobseekerid'])
     {
       $sql = $DBC->prepare("SELECT * FROM `jobseeker` WHERE id=?");
       $sql->bind_param("i", $request['jobseekerid']);
@@ -153,11 +153,12 @@ class model_Jobseeker
           $request[$key]=$value;
         }
       }
+
       if(is_array($getdetail))
       {
       $DBC=$db::dbconnect();
-      $sql=$DBC->prepare("UPDATE `jobseeker` SET `firstname`=?, `lastname`=?, `password`=?, `country`=?, `dob`=?, `timezone`=?, `phone`=?, `mobile`=?, `address`=?, `city`=?, `status`=?, `bank_id`=?, `branch_code`=?, `account_no`=?, `experience_in`=?, `experience_year`=?, `experience_details`=?, `gender`=?, `nric`=?, `race`=?, `nationality`=?, `employment_type`=?, `region`=?, `location`=?, `notification`=?, `specializations`=?, `working_environment`=? WHERE  `id`=?");
-      $sql->bind_param("ssssssssssiisssisisiiississi", $request['firstname'], $request['lastname'], $request['password'], $request['country'], $request['dob'], $request['timezone'], $request['phone'], $request['mobile'], $request['address'], $request['city'], $request['status'], $request['bank_id'], $request['branch_code'], $request['account_no'], $request['experience_in'], $request['experience_year'], $request['experience_details'],$request['gender'], $request['nric'], $request['race'], $request['nationality'], $request['employment_type'], $request['region'], $request['location'], $request['notification'], $request['specializations'], $request['working_environment'], $request['jobseekerid']);
+      $sql=$DBC->prepare("UPDATE `jobseeker` SET `firstname`=?, `lastname`=?, `password`=?, `country`=?, `dob`=?, `timezone`=?, `phone`=?, `mobile`=?, `address`=?, `city`=?, `status`=?, `bank_id`=?, `branch_code`=?, `account_no`=?, `experience_in`=?, `experience_year`=?, `experience_details`=?, `gender`=?, `nric`=?, `race`=?, `nationality`=?, `employment_type`=?, `region`=?, `location`=?, `notification`=?, `notification_off_from`=?, `notification_off_to`=?, `specializations`=?, `working_environment`=? WHERE  `id`=?");
+      $sql->bind_param("ssssssssssiisssisisiisssissssi", $request['firstname'], $request['lastname'], $request['password'], $request['country'], $request['dob'], $request['timezone'], $request['phone'], $request['mobile'], $request['address'], $request['city'], $request['status'], $request['bank_id'], $request['branch_code'], $request['account_no'], $request['experience_in'], $request['experience_year'], $request['experience_details'],$request['gender'], $request['nric'], $request['race'], $request['nationality'], $request['employment_type'], $request['region'], $request['location'], $request['notification'], $request['notification_off_from'], $request['notification_off_to'], $request['specializations'], $request['working_environment'], $request['jobseekerid']);
       $sql->execute();
       return $sql->affected_rows;
       }
@@ -170,22 +171,5 @@ class model_Jobseeker
       return "id not found";
     }
   }
-/*
-  function UpdateJobseekerBankDetail($jobseekerid,$bank_id,$branch_code,$account_no)
-  {
-    global $db;
-    if($jobseekerid && $bank_id && $branch_code && $account_no)
-    {
-      echo 'car';
-      $DBC=$db::dbconnect();
-      $sql=$DBC->prepare("UPDATE `jobseeker_bankdetail` SET `bank_id`=?, `branch_code`=?, `account_no`=? WHERE  `jobseekerid`=?");
-      $sql->bind_param("issi", $bank_id,$branch_code,$account_no,$jobseekerid);
-      $sql->execute();
-      return 'updated';
-    }
-    else {
-      return 'bank detail error';
-    }
-  }*/
 
 }

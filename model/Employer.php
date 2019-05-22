@@ -11,8 +11,7 @@ class model_Employer
     $sql->bind_param("ssssiss",$request['companyname'],$request['profile'],$request['uen'],$request['companycode'],$request['industry'],$request['country'],$CurrentUser->id);
     $sql->execute();
     $insertId=$sql->insert_id;
-
-//$request['name'],$request['email'],$request['password'],$request['type'],$CurrentUser->id,$request['role'],$request['companyid']
+    //$request['name'],$request['email'],$request['password'],$request['type'],$CurrentUser->id,$request['role'],$request['companyid']
     $userdetails= array('name'=>$request['username'],'email'=>$request['useremail'],'password'=>$request['password'],'type'=>'employer','companyid'=>$insertId);
     $userInsertId=model_user::CreateUser($userdetails);
 

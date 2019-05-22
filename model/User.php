@@ -6,7 +6,7 @@ class model_user
     global $request;
     global $db;
     $DBC=$db::dbconnect();
-    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `type` as access, `imgpath`,`email`, `role`, `companyid`, `city`, `state`, `country` FROM users WHERE email =? and password =? ");
+    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `type`  as access, `lastlogin`, `status`, `imgpath`,`email`, `role`, `companyid`, `city`, `state`, `country` FROM users WHERE email =? and password =? ");
     $sql->bind_param("ss", $request['email'],$request['password']);
     $sql->execute();
     $sqldata =$sql->get_result()->fetch_assoc();
