@@ -24,13 +24,13 @@ class controller_Jobseeker
         if($check !== false) {
           move_uploaded_file($_FILES["fileToUpload"]["tmp_name"],$target_file);
           $result=model_Jobseeker::Imagepathupdate($CurrentUser->id,$target_file);
-          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload'));
+          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload','imgpath'=>$target_file));
         } else {
-          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'failure to upload'));
+          lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'failure to upload'));
         }
     }
     else {
-      lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'jobseeker id not found'));
+      lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'jobseeker id not found'));
     }
 
   }
@@ -137,12 +137,12 @@ class controller_Jobseeker
           lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
       }
       else {
-        lib_ApiResult::JsonEncode(array('status'=>304,'result'=>'Update error'));
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Update error'));
       }
 
     }
     else {
-      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Jobseeker ID is empty'));
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Jobseeker ID is empty'));
     }
   }
 
@@ -246,7 +246,7 @@ class controller_Jobseeker
       }
   }
 
-  function GetAppliedList()
+  /*function GetAppliedList()
   {
     include_once('model/Job.php');
     global $request,$CurrentUser;
@@ -258,8 +258,8 @@ class controller_Jobseeker
     else {
       lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'no Job'));
     }
-  }
-
+  }*/
+/*
   function AppliedJob()
   {
     include_once('model/Job.php');
@@ -313,6 +313,6 @@ class controller_Jobseeker
       lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Invalid Input'));
     }
 
-  }
+  }*/
 
 }

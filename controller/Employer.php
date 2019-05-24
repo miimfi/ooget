@@ -6,7 +6,6 @@ class controller_Employer
 
   function ImageUpload()
   {
-    global $request;
     if($request['employerid'])
     {
       $target_dir = "media/profile/employer/";
@@ -18,9 +17,10 @@ class controller_Employer
         $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
         if($check !== false) {
           move_uploaded_file($_FILES["fileToUpload"]["tmp_name"],$target_file);
+          $result=model_Employer::Imagepathupdate($request['employerid'],$target_file);
           lib_ApiResult::JsonEncode(array('status'=>200,'message'=>'upload'));
         } else {
-          lib_ApiResult::JsonEncode(array('status'=>200,'message'=>'failure to upload'));
+          lib_ApiResult::JsonEncode(array('status'=>200,'message'=>'failure to upload','imgpath'=>$target_file));
         }
     }
     else {

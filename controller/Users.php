@@ -36,7 +36,7 @@ class controller_Users
         move_uploaded_file($_FILES["fileToUpload"]["tmp_name"],$target_file);
         $result=model_User::Imagepathupdate($CurrentUser->id,$target_file);
       //$result=true;
-        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload','imagepath'=>$target_file));
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload','imgpath'=>$target_file));
 
       } else {
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'failure to upload'));
@@ -147,16 +147,16 @@ class controller_Users
     global $request,$CurrentUser;
     if($CurrentUser->access!='admin')
     {
-      $request['companyid']=$CurrentUser->companyid;
-      if($CurrentUser->access!='employer'  || $request['companyid']<1)
+      $request['employerid']=$CurrentUser->companyid;
+      if($CurrentUser->access!='employer'  || $request['employerid']<1)
       {
         lib_ApiResult::JsonEncode(array('status'=>403,'result'=>'your not allow to access'));
       }
     }
 
-    if($request['companyid']>0)
+    if($request['employerid']>0)
     {
-      $result =model_User::GetUserList($request['companyid']);
+      $result =model_User::GetUserList($request['employerid']);
     }
     else {
       $result =model_User::GetUserList();
@@ -174,14 +174,25 @@ class controller_Users
 
   function GetUser()
   {
-    global $CurrentUser;
-    $result =model_User::GetUser($CurrentUser->id);
+    global $CurrentUser, $request;
+    if(($CurrentUser->access!='admin' && $CurrentUser->access!='employer') || !$request['userid'])
+    {
+      $request['userid']=$CurrentUser->id;
+    }
+
+    if($request['userid'])
+    {
+    $result =model_User::GetUser($request['userid']);
     if(is_array($result))
     {
       lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
     }
     else {
-      lib_ApiResult::JsonEncode(array('status'=>400,'result'=>$result));
+      lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'no details found'));
+    }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Invalid user id'));
     }
   }
 

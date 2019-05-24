@@ -12,10 +12,10 @@ if(!$request)
   $imgpath_tmp=explode("media",$actual_link);
   if($imgpath_tmp[1])
   {
-  $imgpath='./media'.$imgpath_tmp[1];
+    $imgpath='./media'.$imgpath_tmp[1];
   if(file_exists($imgpath))
   {
-    $im = file_get_contents('./media'.$imgpath[1]);
+    $im = file_get_contents($imgpath);
   }
   else {
     $im = file_get_contents('./media/nouser.png');
@@ -26,7 +26,23 @@ if(!$request)
   }
 }
 
-if($CurrentUser->access=='Jobseeker' )
+
+
+function CheckJobseekerModuleAccess()
+{
+  global $request,$Jobseeker_Allow_Module;
+  $input_request=array('module' => $request['module'],'mode'=>$request['mode']);
+  if(in_array($input_request,$Jobseeker_Allow_Module))
+  {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+
+if($CurrentUser->access=='Jobseeker' && !CheckJobseekerModuleAccess())
 {
 
   $request['module']='Jobseeker';

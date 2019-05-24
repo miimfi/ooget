@@ -29,7 +29,7 @@ class model_Jobseeker
     global $request;
     global $db;
     $DBC=$db::dbconnect();
-    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `email`, `lastlogin`, `status` FROM jobseeker WHERE email =? and password =? ");
+    $sql = $DBC->prepare("SELECT `id`, `firstname`, `lastname`, `email`, `lastlogin`, `status`, `imgpath` FROM jobseeker WHERE email =? and password =? ");
     $sql->bind_param("ss", $request['email'],$request['password']);
     $sql->execute();
     $sqldata =$sql->get_result()->fetch_assoc();
