@@ -19,8 +19,12 @@ class controller_Job
       $request['status']=2;
     }
 
-
-    if($request['job_name'] && $request['department'] && $request['employement_type'] && $request['description'] && $request['specializations'] && $request['working_environment'] && $request['pax_total'] && $request['grace_period'] && $request['over_time_rounding'] && $request['over_time_start_from'] && $request['from'] && $request['to'] && $request['start_time'] && $request['end_time'] && $request['work_days_type'] && $request['postal_code'] && $request['address'] && $request['unit_no'] && $request['region'] && $request['employer_id'] && $request['location'] && $request['charge_rate'] && $request['markup_rate'] && $request['markup_in'] && $request['jobseeker_salary'] && $request['markup_amount'] && $request['project_name'])
+    foreach ($request as $key => $value) {
+      if($value='' )
+      echo $key;
+    }
+    //echo $request['job_name'] ." # ". $request['department'] ." # ". $request['employement_type'] ." # ". $request['description'] ." # ". $request['specializations'] ." # ". $request['working_environment'] ." # ". $request['pax_total'] ." # ". $request['grace_period'] ." # ". $request['over_time_rounding'] ." # ". $request['over_time_minimum'] ." # ". $request['from'] ." # ". $request['to'] ." # ". $request['start_time'] ." # ". $request['end_time'] ." # ". $request['work_days_type'] ." # ". $request['postal_code'] ." # ". $request['address'] ." # ". $request['unit_no'] ." # ". $request['region'] ." # ". $request['employer_id'] ." # ". $request['location'] ." # ". $request['charge_rate'] ." # ". $request['markup_rate'] ." # ". $request['markup_in'] ." # ". $request['jobseeker_salary'] ." # ". $request['markup_amount'] ." # ". $request['project_name'];
+    if($request['job_name'] && $request['department'] && $request['employement_type'] && $request['description'] && $request['specializations'] && $request['working_environment'] && $request['pax_total'] && $request['grace_period'] && $request['over_time_rounding'] && $request['over_time_minimum'] && $request['from'] && $request['to'] && $request['start_time'] && $request['end_time'] && $request['work_days_type'] && $request['postal_code'] && $request['address'] && $request['unit_no'] && $request['region'] && $request['employer_id'] && $request['location'] && $request['project_name'])
     {
       $result=model_Job::CreateJob($request);
       if($result>0)
@@ -164,24 +168,82 @@ class controller_Job
     }
   }
 
-  function AppliedJob()
+  function JobApply()
   {
     global $request, $CurrentUser;
     if($CurrentUser->access=='Jobseeker' && $request['jobid'])
     {
-      $result=model_Job::AppliedJob($CurrentUser->id,$request['jobid']);
+      $result=model_Job::JobApply($CurrentUser->id,$request['jobid']);
       if($result)
       {
-        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'job applide'));
       }
       else {
-        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found / job closed'));
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found / job closed / Already Applied'));
       }
     }
     else {
-      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid jobseeker / job id'));
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid job id / invalide jobseeker account'));
     }
   }
+
+  function JobOffered()
+  {
+    global $request, $CurrentUser;
+    if($request['job_Applied_id'])
+    {
+      $result=model_Job::JobOffered($CurrentUser->id,$request['job_Applied_id']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Job Offered'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'job not found'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid id / Already offered'));
+    }
+  }
+
+  function ApplideReject()
+  {
+    global $request, $CurrentUser;
+    if($request['job_Applied_id'])
+    {
+      $result=model_Job::ApplideReject($CurrentUser->id,$request['job_Applied_id']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Application Rejected'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'error'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid Application'));
+    }
+  }
+
+  function JobseekerJobAccept()
+  {
+    global $request, $CurrentUser;
+    if($request['job_Applied_id'] && $CurrentUser->access=="Jobseeker")
+    {
+      $result=model_Job::JobAccept($CurrentUser->id,$request['job_Applied_id']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Job Accepted'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'error'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid ID'));
+    }
+  }
+
 
   function GetAppliedList()
   {

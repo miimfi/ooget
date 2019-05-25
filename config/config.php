@@ -25,8 +25,9 @@ $SecretKey="6Lc2L6IUAAAAALMeBGsnTHy12WC_maY82MJ4nkiE";
 $Recaptcha='ON'; // ON / OFF
 
 $Jobseeker_Allow_Module= array(
-  array('module' => 'Job','mode'=>'GetOpenJobList' ),
-  array('module' => 'Job','mode'=>'AppliedJob' )
+  array('module' => 'Job','mode'=>'GetOpenJobList'),
+  array('module' => 'Job','mode'=>'JobApply'),
+  array('module' => 'Job','mode'=>'JobseekerJobAccept')
 );
 
 $ServerURL="http://127.0.0.1/ooget/";
