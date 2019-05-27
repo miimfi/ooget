@@ -27,7 +27,10 @@ $Recaptcha='ON'; // ON / OFF
 $Jobseeker_Allow_Module= array(
   array('module' => 'Job','mode'=>'GetOpenJobList'),
   array('module' => 'Job','mode'=>'JobApply'),
-  array('module' => 'Job','mode'=>'JobseekerJobAccept')
+  array('module' => 'Job','mode'=>'GetAppliedList'),
+  array('module' => 'Job','mode'=>'JobseekerJobAccept'),
+  array('module' => 'Job','mode'=>'GetJobDetails'),
+  array('module' => 'Job','mode'=>'SaveJob')
 );
 
 $ServerURL="http://127.0.0.1/ooget/";

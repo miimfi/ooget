@@ -46,11 +46,11 @@ class model_Job
         $DBC=$db::dbconnect();
         if($employerid>0)
         {
-          $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=?");
+          $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=?");
           $sql->bind_param("i",$employerid);
         }
         else {
-          $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id");
+          $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id");
         }
 
         $sql->execute();
@@ -65,25 +65,37 @@ class model_Job
         return $sqldata;
     }
 
-    function GetOpenJobList($employerid=0)
+
+
+    function GetOpenJobList($employerid=0,$saved_job_jobseeker_id)
     {
         global $db;
         $DBC=$db::dbconnect();
         if($employerid>0)
         {
-          $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=? AND recruitment_open=1 AND job_list.status=2 AND company.status=2");
+          $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=? AND recruitment_open=1 AND job_list.status=2 AND company.status=2");
           $sql->bind_param("i",$employerid);
         }
         else {
-          $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE recruitment_open=1 AND job_list.status=2 AND company.status=2");
+          $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE recruitment_open=1 AND job_list.status=2 AND company.status=2");
         }
 
         $sql->execute();
         $result = $sql->get_result();
         $num_of_rows = $result->num_rows;
+        if($saved_job_jobseeker_id)
+        {
+            $SavedJob=model_Job::GetSaveJobList($saved_job_jobseeker_id);
+        }
+
         if($num_of_rows>0)
         {
           while($row = $result->fetch_assoc()) {
+            if($SavedJob[$row['id']])
+            {
+              $row['saved']=1;
+            }
+
             $sqldata[] = $row;
           }
         }
@@ -97,11 +109,11 @@ class model_Job
           $DBC=$db::dbconnect();
           if($employerid>0)
           {
-            $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=? AND job_list.status=2 AND company.status=2");
+            $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=? AND job_list.status=2 AND company.status=2");
             $sql->bind_param("i",$employerid);
           }
           else {
-            $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.status=2 AND company.status=2");
+            $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.status=2 AND company.status=2");
           }
 
           $sql->execute();
@@ -122,11 +134,11 @@ class model_Job
       $DBC=$db::dbconnect();
       if($employerid>0)
       {
-        $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=? AND job_list.status=3 AND company.status=2");
+        $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=? AND job_list.status=3 AND company.status=2");
         $sql->bind_param("i",$employerid);
       }
       else {
-        $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.status=3 AND company.status=2");
+        $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.status=3 AND company.status=2");
       }
 
       $sql->execute();
@@ -147,11 +159,11 @@ class model_Job
       $DBC=$db::dbconnect();
       if($employerid>0)
       {
-        $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=? AND job_list.status=1 AND company.status=2");
+        $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.employer_id=? AND job_list.status=1 AND company.status=2");
         $sql->bind_param("i",$employerid);
       }
       else {
-        $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.status=1 AND company.status=2");
+        $sql = $DBC->prepare("SELECT job_list.`id`, job_list.`job_no`, job_list.`project_name`, job_list.`job_name`, job_list.`department`, job_list.`employement_type`, job_list.`status`, job_list.`pax_total`,job_list.`required`,job_list.`recruitment_open`,job_list.`from`,job_list.`to`, job_list.`employer_id`, company.`name` as company, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.location, job_list.`specializations` FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.status=1 AND company.status=2");
       }
 
       $sql->execute();
@@ -167,11 +179,23 @@ class model_Job
     }
 
 
-    function GetJobDetails($id)
+    function GetJobDetails($id,$JobseekerId=0)
     {
         global $db;
         $DBC=$db::dbconnect();
-        $sql = $DBC->prepare("SELECT job_list.*, company.`name` as employer_name, company.`status` as employer_status FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.`id`=?");
+        if($JobseekerId>0)
+        {
+            $applied_detailes=model_Job::GetAppliedList($JobseekerId,$id);
+            if(is_array($applied_detailes[0]))
+            {
+              $AppliedData['applied_on']=$applied_detailes[0]['applied_on'];
+              $AppliedData['offered_on']=$applied_detailes[0]['offered_on'];
+              $AppliedData['offer_rejected']=$applied_detailes[0]['offer_rejected'];
+              $AppliedData['offer_accepted']=$applied_detailes[0]['offer_accepted'];
+            }
+        }
+
+        $sql = $DBC->prepare("SELECT job_list.*, company.`name` as employer_name, company.`status` as employer_status, company.`profile` AS company_profile, company.`industry`, company.`imgpath` AS company_logo FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.`id`=?");
         $sql->bind_param("i", $id);
         $sql->execute();
         $result = $sql->get_result();
@@ -182,6 +206,11 @@ class model_Job
             $sqldata = $row;
           }
         }
+        if(is_array($AppliedData))
+        {
+          $sqldata['AppliedDetails']=$AppliedData;
+        }
+        // get job break time
         if(is_array($sqldata))
         {
         $sql = $DBC->prepare("SELECT job_break_list.`id` as break_id, `break_name`, `from`, `to`  FROM `job_break_list` WHERE `job_id`=?");
@@ -215,15 +244,65 @@ class model_Job
 
 
 //==========================================================
+    function SaveJob($jobid, $jobseekerid)
+    {
+
+      global $db;
+      $DBC=$db::dbconnect();
+      $sql=$DBC->prepare("INSERT INTO `saved_job` (`job_id`, `jobseeker_id`) VALUES (?, ?)");
+      $sql->bind_param("ii", $jobid,$jobseekerid);
+      $sql->execute();
+      $insertId=$sql->insert_id;
+      return $insertId;
+    }
+
+      function GetSaveJobList($jobid)
+    {
+
+      global $db;
+      $DBC=$db::dbconnect();
+      $sql = $DBC->prepare("SELECT `job_id` FROM saved_job WHERE `jobseeker_id`=?");
+      $sql->bind_param("i", $jobid);
+      $sql->execute();
+      $result = $sql->get_result();
+      $num_of_rows = $result->num_rows;
+      if($num_of_rows>0)
+      {
+        while($row = $result->fetch_assoc()) {
+          $job_data[$row['job_id']]= 1;
+        }
+      }
+      return $job_data;
+    }
+
+    function CheckJobseekerWorkingHours($jobseekerid,$from,$to)
+    {
+        global $db;
+        $DBC=$db::dbconnect();
+        $sql = $DBC->prepare("SELECT job_list.start_time, job_list.end_time FROM `contracts`
+          INNER JOIN job_list ON job_list.id=contracts.job_id INNER JOIN jobseeker ON jobseeker.id=contracts.jobseeker_id WHERE contracts.`jobseeker_id`=? AND (job_list.`from` BETWEEN ? AND ? OR job_list.`to` BETWEEN ? AND ?) AND contracts.`deleted`!=1");
+        $sql->bind_param("issss", $jobseekerid,$from,$to,$from,$to);
+        $sql->execute();
+        $result = $sql->get_result();
+        $num_of_rows = $result->num_rows;
+        if($num_of_rows>0)
+        {
+          while($row = $result->fetch_assoc()) {
+            $job_data[]= $row;
+          }
+        }
+        return $job_data;
+    }
 
     function JobApply($JobseekerId,$Jobid)
     {
       global $db;
       $DBC=$db::dbconnect();
       $jobDetail=model_Job::GetJobDetails($Jobid);
-     //print_r($jobDetail);exit;
-      $CheckAlreadyApplied=model_Job::GetAppliedList($JobseekerId,$Jobid);
-      if(!is_array($CheckAlreadyApplied) && $jobDetail['required']<$jobDetail['pax_total'] && $jobDetail['recruitment_open']==1 && $jobDetail['status']==2 && $jobDetail['employer_status']==2)
+    // print_r($jobDetail);//exit;
+      $CheckAlreadyApplied=model_Job::CheckJobseekerWorkingHours($JobseekerId,$jobDetail['from'],$jobDetail['to']);
+    //  print_r($CheckAlreadyApplied);exit;
+      if(!$CheckAlreadyApplied && $jobDetail['required']<$jobDetail['pax_total'] && $jobDetail['recruitment_open']==1 && $jobDetail['status']==2 && $jobDetail['employer_status']==2)
       {
         $applied_on=date("Y-m-d H:i:s");
         if($jobDetail['auto_offered']==1)
@@ -231,7 +310,7 @@ class model_Job
           $offered_on=$applied_on;
         }
 
-        $sql=$DBC->prepare("INSERT INTO `job_Applied` (`job_id`, `jobseeker_id`, `applied_on`, `offered_on`) VALUES (?, ?, ?, ? )");
+        $sql=$DBC->prepare("INSERT INTO `contracts` (`job_id`, `jobseeker_id`, `applied_on`, `offered_on`) VALUES (?, ?, ?, ? )");
         $sql->bind_param("iiss", $jobDetail['id'],$JobseekerId,$applied_on,$offered_on);
         $sql->execute();
         $insertId=$sql->insert_id;
@@ -250,18 +329,17 @@ class model_Job
 
 
 
-    function JobOffered($Userid,$job_Applied_id)
+    function JobOffered($Userid,$contracts_id)
     {
       global $db;
       $offered_on=date("Y-m-d H:i:s");
       $DBC=$db::dbconnect();
-      $AppliedDetail=model_Job::AppliedDetail($job_Applied_id);
-
+      $AppliedDetail=model_Job::AppliedDetail($contracts_id);
+//print_r($AppliedDetail);exit;
       if(!$AppliedDetail['offer_rejected'] && !$AppliedDetail['offer_accepted'] && !$AppliedDetail['offered_on'] && $AppliedDetail['deleted']!=1 )
       {
-        //print_r($AppliedDetail);exit;
-        $sql=$DBC->prepare("UPDATE `job_Applied` SET `offered_on`=? ,`user_id`=? WHERE  `id`=?");
-        $sql->bind_param("sii", $offered_on, $Userid, $job_Applied_id);
+        $sql=$DBC->prepare("UPDATE `contracts` SET `offered_on`=? ,`user_id`=? WHERE  `id`=?");
+        $sql->bind_param("sii", $offered_on, $Userid, $contracts_id);
         $sql->execute();
         $affectedData=$sql->affected_rows;
         if($affectedData>0)
@@ -275,18 +353,18 @@ class model_Job
       return false;
     }
 
-    function ApplideReject($Userid,$job_Applied_id)
+    function ApplideReject($Userid,$contracts_id)
     {
       global $db;
       $offered_on=date("Y-m-d H:i:s");
       $DBC=$db::dbconnect();
-      $AppliedDetail=model_Job::AppliedDetail($job_Applied_id);
+      $AppliedDetail=model_Job::AppliedDetail($contracts_id);
 
       if(!$AppliedDetail['offer_rejected'] && !$AppliedDetail['offer_accepted'] && $AppliedDetail['deleted']!=1 )
       {
         //print_r($AppliedDetail);exit;
-        $sql=$DBC->prepare("UPDATE `job_Applied` SET `offer_rejected`=? ,`user_id`=? WHERE  `id`=?");
-        $sql->bind_param("sii", $offered_on, $Userid, $job_Applied_id);
+        $sql=$DBC->prepare("UPDATE `contracts` SET `offer_rejected`=? ,`user_id`=? WHERE  `id`=?");
+        $sql->bind_param("sii", $offered_on, $Userid, $contracts_id);
         $sql->execute();
         $affectedData=$sql->affected_rows;
         if($affectedData>0)
@@ -300,15 +378,15 @@ class model_Job
       return false;
     }
 
-    function JobAccept($jobseekerid,$job_Applied_id)
+    function JobAccept($jobseekerid,$contracts_id)
     {
       global $db;
       $accept_on=date("Y-m-d H:i:s");
       $DBC=$db::dbconnect();
-      $sql=$DBC->prepare("SELECT job_Applied.id, job_Applied.job_id, job_Applied.jobseeker_id, job_list.`from`, job_list.`to`, job_list.`work_days_type`, job_list.pax_total, job_list.required FROM job_Applied
-            INNER JOIN job_list ON job_list.id=job_Applied.job_id INNER JOIN jobseeker ON jobseeker.id=job_Applied.jobseeker_id
-            WHERE job_Applied.offer_accepted IS NULL AND job_Applied.offer_rejected IS NULL AND job_Applied.offered_on IS NOT NULL AND job_list.recruitment_open=1 AND job_Applied.id=? AND jobseeker.id=?");
-      $sql->bind_param("ii", $job_Applied_id, $jobseekerid);
+      $sql=$DBC->prepare("SELECT contracts.id, contracts.job_id, contracts.jobseeker_id, job_list.`from`, job_list.`to`, job_list.`work_days_type`, job_list.pax_total, job_list.required FROM contracts
+            INNER JOIN job_list ON job_list.id=contracts.job_id INNER JOIN jobseeker ON jobseeker.id=contracts.jobseeker_id
+            WHERE contracts.offer_accepted IS NULL AND contracts.offer_rejected IS NULL AND contracts.offered_on IS NOT NULL AND job_list.recruitment_open=1 AND contracts.id=? AND jobseeker.id=?");
+      $sql->bind_param("ii", $contracts_id, $jobseekerid);
       $sql->execute();
       $result = $sql->get_result();
       $num_of_rows = $result->num_rows;
@@ -318,19 +396,17 @@ class model_Job
           $job_data= $row;
         }
       }
-      //echo 'qqq'.$job_Applied_id.$jobseekerid;
-      //print_r($job_data);exit;
-    //  return $job_data;
+
       if($job_data['id'])
       {
         //update job applied accepted time
-        $sql2=$DBC->prepare("UPDATE `job_Applied` SET `offer_accepted`=? WHERE  `id`=?");
+        $sql2=$DBC->prepare("UPDATE `contracts` SET `offer_accepted`=? WHERE  `id`=?");
         $sql2->bind_param("si", $accept_on,$job_data['id']);
         $sql2->execute();
-        $affected_job_Applied=$sql2->affected_rows;
+        $affected_contracts=$sql2->affected_rows;
         // update job_list required
         $required=$job_data['required']+1;
-        if($affected_job_Applied)
+        if($affected_contracts)
         {
           if($job_data['pax_total']>$required)
           {
@@ -366,31 +442,31 @@ class model_Job
           $date=date('Y-m-d',strtotime($job_data['from'] . "+".$i." days"));
         }
       //  echo $job_data['job_id']."=".$job_data['jobseeker_id']."=".$date;
-        $is_timesheet=model_Job::CreateTimeSheet($job_data['job_id'],$job_data['jobseeker_id'],$date);
+        $is_timesheet=model_Job::CreateTimeSheet($job_data['job_id'],$job_data['jobseeker_id'],$date,$job_data['$work_days_type']);
       }
 
       return $is_timesheet;
     }
 
 
-    function GetAppliedList($JobseekerId,$jobid)
+    function GetAppliedList($JobseekerId=0,$jobid=0)
     {
       global $db;
       $DBC=$db::dbconnect();
-      $select_query="SELECT job_Applied.*, job_list.project_name, job_list.job_name, job_list.department, job_list.`status` AS job_status, job_list.recruitment_open, jobseeker.firstname as jobseeker_name, jobseeker.email AS jobseeker_email from `job_Applied` INNER JOIN job_list ON job_list.id=job_Applied.job_id INNER JOIN jobseeker ON jobseeker.id=job_Applied.jobseeker_id";
+      $select_query="SELECT contracts.*, job_list.project_name, job_list.employement_type, job_list.location, job_list.job_name, job_list.department, job_list.`specializations`, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.`status` AS job_status, job_list.from as job_start_date, job_list.to as job_end_date, job_list.start_time as job_start_time, job_list.end_time as job_end_time,  job_list.recruitment_open, jobseeker.firstname as jobseeker_name, jobseeker.email as jobseeker_email, company.`name` as employer_name from `contracts` INNER JOIN job_list ON job_list.id=contracts.job_id INNER JOIN jobseeker ON jobseeker.id=contracts.jobseeker_id INNER JOIN company ON company.id=job_list.employer_id";
       if($JobseekerId>0 && $jobid>0)
       {
-        $sql = $DBC->prepare($select_query." WHERE job_Applied.`jobseeker_id`=? AND job_Applied.`job_id`=?");
+        $sql = $DBC->prepare($select_query." WHERE contracts.`jobseeker_id`=? AND contracts.`job_id`=?");
 
         $sql->bind_param("ii", $JobseekerId,$jobid);
       }
       else if ($JobseekerId>0 && !$jobid) {
-        $sql = $DBC->prepare($select_query." WHERE job_Applied.`jobseeker_id`=? AND job_Applied.`deleted`!=1");
+        $sql = $DBC->prepare($select_query." WHERE contracts.`jobseeker_id`=? AND contracts.`deleted`!=1");
         $sql->bind_param("i", $JobseekerId);
       }
       else if(!$JobseekerId && $jobid>0)
       {
-        $sql = $DBC->prepare($select_query." WHERE job_Applied.`job_id`=? AND job_Applied.`deleted`!=1");
+        $sql = $DBC->prepare($select_query." WHERE contracts.`job_id`=? AND contracts.`deleted`!=1");
         $sql->bind_param("i", $jobid);
       }
       else {
@@ -408,12 +484,12 @@ class model_Job
       return $data;
     }
 
-    function AppliedDetail($job_Applied_id)
+    function AppliedDetail($contracts_id)
     {
       global $db;
       $DBC=$db::dbconnect();
-      $sql = $DBC->prepare("SELECT job_Applied.*, job_list.project_name, job_list.job_name, job_list.department, job_list.`status` AS job_status, job_list.recruitment_open, jobseeker.firstname as jobseeker_name, jobseeker.email AS jobseeker_email from `job_Applied` INNER JOIN job_list ON job_list.id=job_Applied.job_id INNER JOIN jobseeker ON jobseeker.id=job_Applied.jobseeker_id  WHERE job_Applied.`id`=? and job_Applied.`deleted`=0");
-      $sql->bind_param("i", $job_Applied_id);
+      $sql = $DBC->prepare("SELECT contracts.*, job_list.project_name, job_list.job_name, job_list.department, job_list.`status` AS job_status, job_list.recruitment_open, jobseeker.firstname as jobseeker_name, jobseeker.email AS jobseeker_email from `contracts` INNER JOIN job_list ON job_list.id=contracts.job_id INNER JOIN jobseeker ON jobseeker.id=contracts.jobseeker_id  WHERE contracts.`id`=? and contracts.`deleted`=0");
+      $sql->bind_param("i", $contracts_id);
       $sql->execute();
       $result = $sql->get_result();
       $num_of_rows = $result->num_rows;
@@ -426,21 +502,31 @@ class model_Job
       return $sqldata;
     }
 
-
-
     function CheckJobseekerTimeSheet($JobseekerId,$jobid)
     {
       return true;
     }
 
-    function CreateTimeSheet($jobid,$jobseekerid,$date)
+    function CreateTimeSheet($jobid,$jobseekerid,$date,$work_days_type)
     {
-
+      include_once('model/Holiday.php');
+      $Request_data['date'] =$date;
+      $holiday=model_holiday::GetHoliday($Request_data);
       global $db;
       $day=date("D",strtotime($date));
       $DBC=$db::dbconnect();
-      $sql=$DBC->prepare("INSERT INTO `time_sheet` (`job_id`, `job_seeker_id`, `date`, `day`) VALUES (?, ?, ?, ?)");
-      $sql->bind_param("iiss",  $jobid, $jobseekerid, $date, $day);
+      if(is_array($holiday))
+      {
+        $is_holiday='P';
+      }
+      else if ($work_days_type!=1 && ($day=='Sat' || $day=='Sun')) {
+        $is_holiday='Y';
+      }
+      else {
+        $is_holiday='N';
+      }
+      $sql=$DBC->prepare("INSERT INTO `time_sheet` (`job_id`, `job_seeker_id`, `date`, `day`, `holiday` ) VALUES (?, ?, ?, ?, ?)");
+      $sql->bind_param("iisss",  $jobid, $jobseekerid, $date, $day, $is_holiday);
       $sql->execute();
       $insertId=$sql->insert_id;
       return $insertId;

@@ -60,14 +60,41 @@ class controller_Job
       }
   }
 
+  function SaveJob()
+  {
+    global $request, $CurrentUser;
+    if($CurrentUser->access=='Jobseeker' && $request['jobid'])
+    {
+      $result=model_Job::SaveJob($request['jobid'], $CurrentUser->id);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Job saved'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'error / alredy saved'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'invalid jobseeker id / job id'));
+    }
+  }
+
   function GetOpenJobList()
   {
       global $request, $CurrentUser;
-      if($CurrentUser->access!="admin" && $CurrentUser->access!="jobseeker")
+      if($CurrentUser->access!="admin" && $CurrentUser->access!="Jobseeker")
       {
           $request['employerid']=$CurrentUser->companyid;
       }
-      $result=model_Job::GetOpenJobList($request['employerid']);
+
+      if($CurrentUser->access=="Jobseeker")
+      {
+        $saved_job_jobseeker_id=$CurrentUser->id;
+      }
+      else {
+        $saved_job=0;
+      }
+      $result=model_Job::GetOpenJobList($request['employerid'],$saved_job_jobseeker_id);
       if(is_array($result))
       {
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
@@ -130,10 +157,14 @@ class controller_Job
 
   function GetJobDetails()
   {
-    global $request;
+    global $request, $CurrentUser;
+    if($CurrentUser->access=="Jobseeker")
+    {
+      $JobseekerId=$CurrentUser->id;
+    }
     if($request['jobid']>0)
     {
-      $result=model_Job::GetJobDetails($request['jobid']);
+      $result=model_Job::GetJobDetails($request['jobid'],$JobseekerId);
       if($result)
       {
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
@@ -190,9 +221,9 @@ class controller_Job
   function JobOffered()
   {
     global $request, $CurrentUser;
-    if($request['job_Applied_id'])
+    if($request['contracts_id'])
     {
-      $result=model_Job::JobOffered($CurrentUser->id,$request['job_Applied_id']);
+      $result=model_Job::JobOffered($CurrentUser->id,$request['contracts_id']);
       if($result)
       {
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Job Offered'));
@@ -209,9 +240,9 @@ class controller_Job
   function ApplideReject()
   {
     global $request, $CurrentUser;
-    if($request['job_Applied_id'])
+    if($request['contracts_id'])
     {
-      $result=model_Job::ApplideReject($CurrentUser->id,$request['job_Applied_id']);
+      $result=model_Job::ApplideReject($CurrentUser->id,$request['contracts_id']);
       if($result)
       {
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Application Rejected'));
@@ -228,9 +259,9 @@ class controller_Job
   function JobseekerJobAccept()
   {
     global $request, $CurrentUser;
-    if($request['job_Applied_id'] && $CurrentUser->access=="Jobseeker")
+    if($request['contracts_id'] && $CurrentUser->access=="Jobseeker")
     {
-      $result=model_Job::JobAccept($CurrentUser->id,$request['job_Applied_id']);
+      $result=model_Job::JobAccept($CurrentUser->id,$request['contracts_id']);
       if($result)
       {
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Job Accepted'));

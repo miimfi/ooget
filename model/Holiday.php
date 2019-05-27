@@ -34,7 +34,7 @@ class model_holiday
     }
     else if($request['date'])
     {
-      echo $request['date'];
+    //  echo $request['date'];
       $sql = $DBC->prepare("SELECT * FROM `holiday` where `date`=? ");
       $sql->bind_param("s", $request['date']);
     }
