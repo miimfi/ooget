@@ -1,5 +1,5 @@
 <?php
-global $dbconfig, $ServerRequestLog, $ServerResponseLog, $ServerQuaryLog, $ErrorLog, $request, $db, $ServerURL, $JWTKey, $JWTExpirationTime, $SecretKey, $Recaptcha, $Jobseeker_Allow_Module;
+global $dbconfig, $ServerRequestLog, $ServerResponseLog, $ServerQuaryLog, $ErrorLog, $request, $db, $ServerURL, $JWTKey, $JWTExpirationTime, $SecretKey, $Recaptcha, $Jobseeker_Allow_Module, $BeforePunchIn;
 
 // DB Config
 $dbconfig['db_server'] = '127.0.0.1';
@@ -30,8 +30,15 @@ $Jobseeker_Allow_Module= array(
   array('module' => 'Job','mode'=>'GetAppliedList'),
   array('module' => 'Job','mode'=>'JobseekerJobAccept'),
   array('module' => 'Job','mode'=>'GetJobDetails'),
-  array('module' => 'Job','mode'=>'SaveJob')
+  array('module' => 'Job','mode'=>'SaveJob'),
+  array('module' => 'Job','mode'=>'RemoveSavedJob'),
+  array('module' => 'Job','mode'=>'GetJobseekerTimeSheet'),
+  array('module' => 'Job','mode'=>'GetJobseekerContractList'),
+  array('module' => 'Job','mode'=>'GetTodayJobseekerTimeSheet')
 );
+
+
+$BeforePunchIn=15;
 
 $ServerURL="http://127.0.0.1/ooget/";
 error_reporting(E_ALL);

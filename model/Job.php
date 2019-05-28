@@ -8,6 +8,8 @@ class model_Job
     $DBC=$db::dbconnect();
     $date1=date("Y")."-01-01 00:00:00";
     $date2=date("Y")."-12-31 23:59:59";
+
+// start job create number
     $sql_count=$DBC->prepare("SELECT `job_no`  FROM job_list WHERE `created_on` BETWEEN ? AND ? ORDER BY id DESC LIMIT 1");
     $sql_count->bind_param("ss", $date1, $date2);
     $sql_count->execute();
@@ -25,7 +27,7 @@ class model_Job
     {
       $job_no="OOGET-".date("Y")."-0001";
     }
-
+// end job create number
     $sql=$DBC->prepare("INSERT INTO `job_list` (`job_name`, `department`, `employement_type`, `description`, `specializations`, `working_environment`, `pax_total`, `grace_period`, `over_time_rounding`, `over_time_minimum`, `from`, `to`, `start_time`, `end_time`, `work_days_type`, `postal_code`, `address`, `unit_no`, `region`, `location`, `charge_rate`, `markup_rate`, `markup_in`, `jobseeker_salary`, `markup_amount`,`auto_offered`, `auto_accepted`, `project_name`,`employer_id`,`job_no`, `status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $sql->bind_param("ssisssiiiissssisssssiisiiiisisi", $request['job_name'], $request['department'], $request['employement_type'], $request['description'], $request['specializations'], $request['working_environment'], $request['pax_total'], $request['grace_period'], $request['over_time_rounding'], $request['over_time_minimum'], $request['from'], $request['to'], $request['start_time'], $request['end_time'], $request['work_days_type'], $request['postal_code'], $request['address'], $request['unit_no'], $request['region'], $request['location'], $request['charge_rate'], $request['markup_rate'], $request['markup_in'], $request['jobseeker_salary'], $request['markup_amount'], $request['auto_offered'], $request['auto_accepted'], $request['project_name'],$request['employer_id'],$job_no, $request['status']);
     $sql->execute();
@@ -192,7 +194,12 @@ class model_Job
               $AppliedData['offered_on']=$applied_detailes[0]['offered_on'];
               $AppliedData['offer_rejected']=$applied_detailes[0]['offer_rejected'];
               $AppliedData['offer_accepted']=$applied_detailes[0]['offer_accepted'];
+              $AppliedData['contract_id']=$applied_detailes[0]['id'];
             }
+
+            $SavedDetails=model_Job::GetSaveJobList($JobseekerId);
+            //print_r($SavedDetails);exit;
+
         }
 
         $sql = $DBC->prepare("SELECT job_list.*, company.`name` as employer_name, company.`status` as employer_status, company.`profile` AS company_profile, company.`industry`, company.`imgpath` AS company_logo FROM `job_list` INNER JOIN company ON company.id=job_list.employer_id WHERE job_list.`id`=?");
@@ -208,7 +215,11 @@ class model_Job
         }
         if(is_array($AppliedData))
         {
-          $sqldata['AppliedDetails']=$AppliedData;
+          $sqldata['jobseeker_applied_details']=$AppliedData;
+        }
+        if($SavedDetails[$id])
+        {
+          $sqldata['jobseeker_saved_data']=1;
         }
         // get job break time
         if(is_array($sqldata))
@@ -243,7 +254,7 @@ class model_Job
     }
 
 
-//==========================================================
+//======================= for jobseeker ===================================
     function SaveJob($jobid, $jobseekerid)
     {
 
@@ -256,13 +267,32 @@ class model_Job
       return $insertId;
     }
 
-      function GetSaveJobList($jobid)
+
+    function RemoveSavedJob($jobid, $jobseekerid)
+    {
+
+      global $db;
+      $DBC=$db::dbconnect();
+      $sql=$DBC->prepare("DELETE FROM `saved_job` WHERE  `job_id`=? and `jobseeker_id`=?");
+      $sql->bind_param("ii", $jobid,$jobseekerid);
+      $sql->execute();
+      $affectedData=$sql->affected_rows;
+      if($affectedData>0)
+      {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+
+      function GetSaveJobList($jobseekerid)
     {
 
       global $db;
       $DBC=$db::dbconnect();
       $sql = $DBC->prepare("SELECT `job_id` FROM saved_job WHERE `jobseeker_id`=?");
-      $sql->bind_param("i", $jobid);
+      $sql->bind_param("i", $jobseekerid);
       $sql->execute();
       $result = $sql->get_result();
       $num_of_rows = $result->num_rows;
@@ -274,6 +304,8 @@ class model_Job
       }
       return $job_data;
     }
+
+
 
     function CheckJobseekerWorkingHours($jobseekerid,$from,$to)
     {
@@ -442,7 +474,7 @@ class model_Job
           $date=date('Y-m-d',strtotime($job_data['from'] . "+".$i." days"));
         }
       //  echo $job_data['job_id']."=".$job_data['jobseeker_id']."=".$date;
-        $is_timesheet=model_Job::CreateTimeSheet($job_data['job_id'],$job_data['jobseeker_id'],$date,$job_data['$work_days_type']);
+        $is_timesheet=model_Job::CreateTimeSheet($contracts_id,$job_data['job_id'],$job_data['jobseeker_id'],$date,$job_data['$work_days_type']);
       }
 
       return $is_timesheet;
@@ -507,7 +539,128 @@ class model_Job
       return true;
     }
 
-    function CreateTimeSheet($jobid,$jobseekerid,$date,$work_days_type)
+    function GetJobseekerTimeSheet($JobseekerId,$from,$to)
+    {
+      global $db;
+      $DBC=$db::dbconnect();
+      $sql = $DBC->prepare("SELECT * FROM time_sheet WHERE `job_seeker_id`=? AND `date` BETWEEN  ? AND ?");
+      $sql->bind_param("iss", $JobseekerId,$from,$to);
+      $sql->execute();
+      $result = $sql->get_result();
+      $num_of_rows = $result->num_rows;
+      if($num_of_rows>0)
+      {
+        while($row = $result->fetch_assoc()) {
+          $sqldata[] = $row;
+        }
+      }
+      return $sqldata;
+    }
+
+    function GetJobseekerContractList($JobseekerId)
+    {
+      global $db;
+      $DBC=$db::dbconnect();
+      $sql = $DBC->prepare("SELECT contracts.*, job_list.job_name, job_list.project_name, job_list.`status` AS job_status, company.`name` AS company_name  FROM  contracts
+      INNER JOIN job_list ON job_list.id=contracts.job_id INNER JOIN company ON job_list.employer_id=company.id
+      WHERE  contracts.offer_accepted IS NOT NULL AND contracts.jobseeker_id=?");
+      $sql->bind_param("i", $JobseekerId);
+      $sql->execute();
+      $result = $sql->get_result();
+      $num_of_rows = $result->num_rows;
+      if($num_of_rows>0)
+      {
+        while($row = $result->fetch_assoc()) {
+          $sqldata[] = $row;
+        }
+      }
+      return $sqldata;
+    }
+
+    function GetTodayJobseekerTimeSheet($jobseekerid, $contractid)
+    {
+      global $db,$BeforePunchIn;
+      $DBC=$db::dbconnect();
+      $today=date("Y-m-d");
+      $yesterday=date('Y-m-d', strtotime('-1 days'));
+      $nextday=date('Y-m-d', strtotime('+1 days'));
+      // get job details
+      $sql = $DBC->prepare("SELECT contracts.`deleted` as contarct_status, job_list.job_name, job_list.`status` AS job_status, company.`name` AS company_name, job_list.grace_period, job_list.start_time, job_list.end_time, job_list.job_no, job_list.`from`,job_list.`to` FROM  contracts
+      INNER JOIN job_list ON job_list.id=contracts.job_id INNER JOIN company ON job_list.employer_id=company.id
+      WHERE contracts.id=? AND contracts.offer_accepted IS NOT NULL");
+      $sql->bind_param("i", $contractid);
+      $sql->execute();
+      $result = $sql->get_result();
+      $num_of_rows = $result->num_rows;
+      if($num_of_rows>0)
+      {
+        while($row = $result->fetch_assoc()) {
+          $sqldata= $row;
+        }
+      }
+      $jobtime['start_time']=$sqldata['start_time'];
+      $jobtime['end_time']=$sqldata['end_time'];
+
+      if($sqldata['contarct_status']==1)
+      {
+        return array('contract_status' => $sqldata['contarct_status'],'result'=> "contract closed");
+      }
+      //$sqldata['from']="2019-05-29";
+      if($sqldata['from']<$today)
+      {
+        $yesterdayJob=model_Job::GetJobseekerTimeSheet($jobseekerid,$yesterday,$yesterday);
+      }
+      if($sqldata['from']==$today)
+      {
+        $CurrentDayJob=model_Job::GetJobseekerTimeSheet($jobseekerid,$today,$today);
+      }
+      /*if($sqldata['to']>$today)
+      {
+          $nextdayJob=model_Job::GetJobseekerTimeSheet($jobseekerid,$nextday,$nextday);
+      }*/
+
+      if(!$CurrentDayJob && !$yesterdayJob)
+      {
+        return array('contract_status' => $sqldata['job_status'],'result'=> "Your contract start at ".$sqldata['from']." - ".$sqldata['start_time']);
+
+      }
+      else if ($CurrentDayJob && !$yesterdayJob && strtotime($sqldata['start_time'])>strtotime("+".$BeforePunchIn." minutes")) {
+        return array('contract_status' => $sqldata['contarct_status'],'result'=> "Your contract start today at ".$sqldata['start_time']);
+
+      }else if ($yesterdayJob && strtotime($sqldata['start_time'])>strtotime("+".$BeforePunchIn." minutes")) {
+        return array('contract_status' => $sqldata['contarct_status'],'result'=> $yesterdayJob[0], 'job_time'=>$jobtime);
+      }
+      else if($CurrentDayJob && strtotime($sqldata['start_time'])<strtotime("+".$BeforePunchIn." minutes"))
+      {
+        return array('contract_status' => $sqldata['contarct_status'],'result'=> $CurrentDayJob[0], 'job_time'=>$jobtime);
+      }
+      //$getJobdetails=model_Job::
+      return array('contract_status' => $sqldata['contarct_status'],'result'=> "invalid contract");
+    }
+
+    function PunchIn($jobseekerid,$timesheet_id)
+    {
+      global $db,$BeforePunchIn;
+      $DBC=$db::dbconnect();
+      $today=date("Y-m-d");
+
+      // get job details
+      $sql = $DBC->prepare("SELECT time_sheet.clock_in FROM time_sheet INNER JOIN contracts ON  contracts.id = time_sheet.contracts_id
+      WHERE time_sheet.`id`=? AND time_sheet.`job_seeker_id`=? AND time_sheet.clock_in  IS NULL AND contracts.deleted=0");
+      $sql->bind_param("ii", $timesheet_id,$jobseekerid);
+      $sql->execute();
+      $result = $sql->get_result();
+      $num_of_rows = $result->num_rows;
+      if($num_of_rows>0)
+      {
+        while($row = $result->fetch_assoc()) {
+          $sqldata= $row;
+        }
+      }
+      return $sqldata;
+    }
+
+    function CreateTimeSheet($contracts_id,$jobid,$jobseekerid,$date,$work_days_type)
     {
       include_once('model/Holiday.php');
       $Request_data['date'] =$date;
@@ -525,8 +678,8 @@ class model_Job
       else {
         $is_holiday='N';
       }
-      $sql=$DBC->prepare("INSERT INTO `time_sheet` (`job_id`, `job_seeker_id`, `date`, `day`, `holiday` ) VALUES (?, ?, ?, ?, ?)");
-      $sql->bind_param("iisss",  $jobid, $jobseekerid, $date, $day, $is_holiday);
+      $sql=$DBC->prepare("INSERT INTO `time_sheet` (`contracts_id`,`job_id`, `job_seeker_id`, `date`, `day`, `holiday` ) VALUES (?, ?, ?, ?, ?, ?)");
+      $sql->bind_param("iiisss", $contracts_id, $jobid, $jobseekerid, $date, $day, $is_holiday);
       $sql->execute();
       $insertId=$sql->insert_id;
       return $insertId;

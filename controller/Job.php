@@ -79,6 +79,25 @@ class controller_Job
     }
   }
 
+  function RemoveSavedJob()
+  {
+    global $request, $CurrentUser;
+    if($CurrentUser->access=='Jobseeker' && $request['jobid'])
+    {
+      $result=model_Job::RemoveSavedJob($request['jobid'], $CurrentUser->id);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Job Removed'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'error'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'invalid jobseeker id / job id'));
+    }
+  }
+
   function GetOpenJobList()
   {
       global $request, $CurrentUser;
@@ -107,7 +126,7 @@ class controller_Job
   function GetLiveJobList()
   {
     global $request, $CurrentUser;
-    if($CurrentUser->access!="admin" && $CurrentUser->access!="jobseeker")
+    if($CurrentUser->access!="admin" && $CurrentUser->access!="Jobseeker")
     {
         $request['employerid']=$CurrentUser->companyid;
     }
@@ -259,9 +278,9 @@ class controller_Job
   function JobseekerJobAccept()
   {
     global $request, $CurrentUser;
-    if($request['contracts_id'] && $CurrentUser->access=="Jobseeker")
+    if($request['contract_id'] && $CurrentUser->access=="Jobseeker")
     {
-      $result=model_Job::JobAccept($CurrentUser->id,$request['contracts_id']);
+      $result=model_Job::JobAccept($CurrentUser->id,$request['contract_id']);
       if($result)
       {
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Job Accepted'));
@@ -279,7 +298,7 @@ class controller_Job
   function GetAppliedList()
   {
     global $request,$CurrentUser;
-    if($CurrentUser->access=="jobseeker")
+    if($CurrentUser->access=="Jobseeker")
     {
       $request['jobseekerid']=$CurrentUser->id;
     }
@@ -293,5 +312,86 @@ class controller_Job
     }
   }
 
+  function GetJobseekerContractList()
+  {
+    global $request,$CurrentUser;
+    if($CurrentUser->access=="Jobseeker")
+    {
+      $result=model_Job::GetJobseekerContractList($CurrentUser->id);
+      if(is_array($result))
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'no Contracts'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'only for jobseekers'));
+    }
+  }
+
+  function GetJobseekerTimeSheet()
+  {
+    global $request,$CurrentUser;
+    if($CurrentUser->access=="Jobseeker")
+    {
+      $request['jobseekerid']=$CurrentUser->id;
+    }
+    if($request['jobseekerid'] && $request['from'] && $request['to'])
+    {
+      $result=model_Job::GetJobseekerTimeSheet($request['jobseekerid'],$request['from'],$request['to']);
+      if(is_array($result))
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'no timesheet'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Check input'));
+    }
+  }
+
+  function GetTodayJobseekerTimeSheet()
+  {
+    global $request,$CurrentUser;
+    if($CurrentUser->access=="Jobseeker" && $request['contract_id'])
+    {
+      $request['jobseekerid']=$CurrentUser->id;
+      $result=model_Job::GetTodayJobseekerTimeSheet($request['jobseekerid'],$request['contract_id']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'no timesheet found'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Check input'));
+    }
+  }
+
+  function PunchIn($value='')
+  {
+    global $request,$CurrentUser;
+    if($CurrentUser->access=="Jobseeker" && $request['timesheet_id'])
+    {
+      $request['jobseekerid']=$CurrentUser->id;
+      $result=model_Job::GetTodayJobseekerTimeSheet($request['jobseekerid'],$request['timesheet_id']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'error'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'invalide timesheet id / invalid jobseeker account'));
+    }
+  }
 
 }
