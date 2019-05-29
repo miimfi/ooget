@@ -374,19 +374,46 @@ class controller_Job
     }
   }
 
-  function PunchIn($value='')
+  function PunchIn()
   {
     global $request,$CurrentUser;
     if($CurrentUser->access=="Jobseeker" && $request['timesheet_id'])
     {
       $request['jobseekerid']=$CurrentUser->id;
-      $result=model_Job::GetTodayJobseekerTimeSheet($request['jobseekerid'],$request['timesheet_id']);
+      $result=model_Job::PunchIn($request['jobseekerid'],$request['timesheet_id']);
       if($result)
       {
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
       }
       else {
-        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'error'));
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>"You can't punch in this timesheet"));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'invalide timesheet id / invalid jobseeker account'));
+    }
+  }
+
+  function PunchOut()
+  {
+    global $request,$CurrentUser;
+    if($CurrentUser->access=="Jobseeker" && $request['timesheet_id'])
+    {
+      $request['jobseekerid']=$CurrentUser->id;
+      $result=model_Job::PunchOut($request['jobseekerid'],$request['timesheet_id']);
+      if($result)
+      {
+        if($result['code']=='succes')
+        {
+            lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+        }
+        else {
+          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>$result));
+        }
+
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>"You can't punch out this timesheet"));
       }
     }
     else {
