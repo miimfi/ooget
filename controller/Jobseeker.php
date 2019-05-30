@@ -194,15 +194,12 @@ class controller_Jobseeker
     global $request,$CurrentUser;
     if($CurrentUser->access=='Jobseeker')
     {
-      $result=model_Jobseeker::GetJobseeker($CurrentUser->id);
+      $request['jobseekerid']=$CurrentUser->id;
     }
-    else if(!$request['jobseekerid'])
-    {
-      $result=model_Jobseeker::GetJobseeker();
-    }
-    else {
-      $result=model_Jobseeker::GetJobseeker($request['jobseekerid']);
-    }
+
+      $result=model_Jobseeker::GetJobseeker($request['jobseekerid'],$request['pending']);
+
+
 
     if($result)
     {

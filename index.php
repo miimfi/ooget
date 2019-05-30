@@ -1,21 +1,10 @@
 <?php
-include('config/config.php');
-include('lib/DB.php');
-include('lib/ApiResult.php');
-include('lib/IoLib.php');
-include('lib/jwt.php');
-include('controller/router.php');
-
-
-
-
-
-//lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$request));
-//print_r($_SERVER['HTTP_TOKEN']);
-/*if (isset($_SERVER['REQUEST_URI']))
-{
-    $params = explode("/", ltrim($_SERVER['REQUEST_URI'], "/"));
-    print_r($params);
-}*/
+include('config/config.php'); // app config + DB config
+include('config/appConfig.php'); // users module config + global values
+include('lib/DB.php'); // db lib
+include('lib/ApiResult.php'); // api out put
+include('lib/IoLib.php'); // input request controller
+include('lib/jwt.php'); // token
+include('controller/router.php'); // router
 
  ?>

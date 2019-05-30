@@ -1,5 +1,5 @@
 <?php
-global $dbconfig, $ServerRequestLog, $ServerResponseLog, $ServerQuaryLog, $ErrorLog, $request, $db, $ServerURL, $JWTKey, $JWTExpirationTime, $SecretKey, $Recaptcha, $Jobseeker_Allow_Module, $BeforePunchIn, $MinimumWorkingHours;
+global $dbconfig, $ServerRequestLog, $ServerResponseLog, $ServerQuaryLog, $ErrorLog, $request, $db, $ServerURL, $JWTKey, $JWTExpirationTime, $SecretKey, $Recaptcha, $BeforePunchIn, $MinimumWorkingHours;
 
 // DB Config
 $dbconfig['db_server'] = '127.0.0.1';
@@ -24,20 +24,7 @@ $JWTKey='MIICXQIBAAKBgQCqtM24cU6wcO6wn0jk2S3KNyWJzXurkMzmCnvDxLZ5H5wzR/Yx'; // k
 $SecretKey="6Lc2L6IUAAAAALMeBGsnTHy12WC_maY82MJ4nkiE";
 $Recaptcha='ON'; // ON / OFF
 
-$Jobseeker_Allow_Module= array(
-  array('module' => 'Job','mode'=>'GetOpenJobList'),
-  array('module' => 'Job','mode'=>'JobApply'),
-  array('module' => 'Job','mode'=>'GetAppliedList'),
-  array('module' => 'Job','mode'=>'JobseekerJobAccept'),
-  array('module' => 'Job','mode'=>'GetJobDetails'),
-  array('module' => 'Job','mode'=>'SaveJob'),
-  array('module' => 'Job','mode'=>'RemoveSavedJob'),
-  array('module' => 'Job','mode'=>'GetJobseekerTimeSheet'),
-  array('module' => 'Job','mode'=>'GetJobseekerContractList'),
-  array('module' => 'Job','mode'=>'GetTodayJobseekerTimeSheet'),
-  array('module' => 'Job','mode'=>'PunchIn'),
-  array('module' => 'Job','mode'=>'PunchOut')
-);
+
 // set allow to jobseeker to bunch befor clock_in time (min)
 $BeforePunchIn=15;
 // set minimum punch out time
@@ -45,10 +32,9 @@ $MinimumWorkingHours=15;
 
 $ServerURL="http://127.0.0.1/ooget/";
 error_reporting(E_ALL);
-
 ini_set('memory_limit','51200M');
 set_time_limit(0);
 ini_set('max_execution_time', 0);
 ini_set('post_max_size', '250M');
 
- ?>
+?>

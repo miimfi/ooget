@@ -43,11 +43,15 @@ class model_Jobseeker
     return $sqldata;
   }
 
-  function GetJobseeker($id=0)
+  function GetJobseeker($id=0,$pending=0)
   {
     global $db;
     $DBC=$db::dbconnect();
-    if($id>0)
+    if($pending>0)
+    {
+      $sql = $DBC->prepare("SELECT `id`, `imgpath`, `firstname`, `lastname`, `email`, `status`, `country`, `phone`, `gender` FROM `jobseeker` WHERE `status`=0");
+    }
+    else if($id>0)
     {
       $sql = $DBC->prepare("SELECT * FROM `jobseeker` WHERE id=?");
       $sql->bind_param("i", $id);
@@ -110,7 +114,6 @@ class model_Jobseeker
       $sql=$DBC->prepare("UPDATE `jobseeker` SET `status`=? WHERE  `id`=?");
       $sql->bind_param("ii", $status,$id);
       $sql->execute();
-      echo $sql->affected_rows;
       return $sql->affected_rows;
     }
     else {
