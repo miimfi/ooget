@@ -9,11 +9,11 @@ $Jobseeker_Allow_Module= array(
   array('module' => 'Job','mode'=>'GetJobDetails'),
   array('module' => 'Job','mode'=>'SaveJob'),
   array('module' => 'Job','mode'=>'RemoveSavedJob'),
-  array('module' => 'Job','mode'=>'GetJobseekerTimeSheet'),
+  array('module' => 'Timesheet','mode'=>'GetJobseekerTimeSheet'),
   array('module' => 'Job','mode'=>'GetJobseekerContractList'),
-  array('module' => 'Job','mode'=>'GetTodayJobseekerTimeSheet'),
-  array('module' => 'Job','mode'=>'PunchIn'),
-  array('module' => 'Job','mode'=>'PunchOut'),
+  array('module' => 'Timesheet','mode'=>'GetTodayJobseekerTimeSheet'),
+  array('module' => 'Timesheet','mode'=>'PunchIn'),
+  array('module' => 'Timesheet','mode'=>'PunchOut'),
   array('module' => 'Job','mode'=>'MatchedJob'),
   array('module' => 'Terms','mode'=>'GetTerms')
 );

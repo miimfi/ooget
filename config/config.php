@@ -39,6 +39,6 @@ ini_set('post_max_size', '250M');
 
 ini_set('display_errors', 'Off');
 ini_set('display_startup_errors', 'Off');
-error_reporting(0);
+//error_reporting(0);
 
 ?>
