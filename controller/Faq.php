@@ -6,15 +6,12 @@ class controller_Faq
   {
     isAdmin();
     global $request;
-    if($request['name'] && $request['date'])
+    if($request['name'] && $request['body'] && $request['type'])
     {
-      $result=model_faq::CreateFaq($request['name'],$request['date']);
+      $result=model_faq::CreateFaq($request);
       if($result)
       {
-        $result_data['id']=$result;
-        $result_data['date']=$request['date'];
-        $result_data['name']=$request['name'];
-        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result_data));
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'FAQ added'));
       }
       else {
         lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Invalid Input'));
@@ -52,10 +49,10 @@ class controller_Faq
   {
     isAdmin();
     global $request;
-    if($request['id'])
+    if($request['id'] && ($request['name'] || $request['body'] || $request['type']))
     {
       $result=model_faq::UpdateFaq($request);
-      if($result)
+      if($result>0)
       {
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'updated'));
       }
@@ -70,11 +67,20 @@ class controller_Faq
 
   }
 
+
   function GetFaq()
   {
-    global $request;
-    if($request['id'] || $request['date'] || $request['name'])
+    global $request,$CurrentUser;
+    if($CurrentUser->access=="Jobseeker")
     {
+      $request['type']=2;
+    }
+
+    if($CurrentUser->access=="employer")
+    {
+      $request['type']=1;
+    }
+
       $result=model_faq::GetFaq($request);
       if($result)
       {
@@ -84,11 +90,8 @@ class controller_Faq
         lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'no data'));
       }
     }
-    else {
-      lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Invalid Input'));
-    }
 
-  }
+
 
 }
  ?>

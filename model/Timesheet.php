@@ -7,12 +7,58 @@ class model_timesheet
         return true;
       }
 
-      function GetJobseekerTimeSheet($JobseekerId,$from,$to)
+      function GetTimeSheet($request)
       {
         global $db;
         $DBC=$db::dbconnect();
-        $sql = $DBC->prepare("SELECT * FROM time_sheet WHERE `job_seeker_id`=? AND `date` BETWEEN  ? AND ?");
-        $sql->bind_param("iss", $JobseekerId,$from,$to);
+
+        $data_type='i';
+        $params[]=$request['contractid'];
+        $sql_query="SELECT * FROM time_sheet WHERE `contracts_id`=? ";
+
+        if($request['timesheet_id'])
+        {
+          $sql_query="SELECT * FROM time_sheet WHERE `id`=? ";
+          $data_type='i';
+          $params[0]=$request['timesheet_id'];
+        }
+        if($request['jobseekerid'])
+        {
+          $sql_query.=" AND `jobseeker_id`=? ";
+          $data_type.='i';
+          $params[]=$request['jobseekerid'];
+        }
+        if($request['from'] && $request['from'])
+        {
+          $sql_query.=" AND `date` BETWEEN  ? AND ? ";
+          $data_type.='ss';
+          $params[]=$request['from'];
+          $params[]=$request['to'];
+        }
+
+
+        /*
+        if($request['timesheet_id'])
+        {
+          $sql = $DBC->prepare("SELECT * FROM time_sheet WHERE `id`=? ");
+          $sql->bind_param("i",$request['timesheet_id']);
+        }
+        elseif($request['jobseekerid'])
+        {
+          echo 2;
+          $sql = $DBC->prepare("SELECT * FROM time_sheet WHERE `contracts_id`=? AND `jobseeker_id`=?");
+          $sql->bind_param("ii", $request['contractid'],$request['jobseekerid']);
+        }
+        else {
+          echo 1;
+          echo $request['contractid'];
+          $sql = $DBC->prepare("SELECT * FROM time_sheet WHERE `contracts_id`=? ");
+          $sql->bind_param("i", $request['contractid']);
+        }
+        */
+
+        $sql = $DBC->prepare($sql_query);
+        $sql->bind_param($data_type, ...$params);
         $sql->execute();
         $result = $sql->get_result();
         $num_of_rows = $result->num_rows;
@@ -97,7 +143,7 @@ class model_timesheet
             $DBC=$db::dbconnect();
             $sql = $DBC->prepare("SELECT time_sheet.clock_verified_in, time_sheet.clock_in, job_list.start_time, job_list.end_time, time_sheet.date FROM time_sheet
               INNER JOIN contracts ON contracts.id = time_sheet.contracts_id INNER JOIN job_list ON job_list.id = contracts.job_id
-              WHERE time_sheet.`id`=? AND time_sheet.`job_seeker_id`=? AND time_sheet.`clock_in` IS NULL AND contracts.`deleted`=0 AND time_sheet.`date` BETWEEN ? AND ?");
+              WHERE time_sheet.`id`=? AND time_sheet.`jobseeker_id`=? AND time_sheet.`clock_in` IS NULL AND contracts.`deleted`=0 AND time_sheet.`date` BETWEEN ? AND ?");
             $sql->bind_param("iiss", $timesheet_id, $jobseekerid, $yesterday, $today);
             $sql->execute();
             $result = $sql->get_result();
@@ -158,7 +204,7 @@ class model_timesheet
             $DBC=$db::dbconnect();
             $sql = $DBC->prepare("SELECT time_sheet.clock_verified_in, time_sheet.clock_verified_out, time_sheet.clock_in, time_sheet.clock_out, job_list.start_time, job_list.end_time, time_sheet.date FROM time_sheet
               INNER JOIN contracts ON contracts.id = time_sheet.contracts_id INNER JOIN job_list ON job_list.id = contracts.job_id
-              WHERE time_sheet.`id`=? AND time_sheet.`job_seeker_id`=? AND (time_sheet.`clock_in` IS NOT NULL OR time_sheet.`clock_verified_in` IS NOT NULL) AND contracts.`deleted`=0 AND time_sheet.`date` BETWEEN ? AND ?");
+              WHERE time_sheet.`id`=? AND time_sheet.`jobseeker_id`=? AND (time_sheet.`clock_in` IS NOT NULL OR time_sheet.`clock_verified_in` IS NOT NULL) AND contracts.`deleted`=0 AND time_sheet.`date` BETWEEN ? AND ?");
             $sql->bind_param("iiss", $timesheet_id, $jobseekerid, $yesterday, $today);
             $sql->execute();
             $result = $sql->get_result();
@@ -186,9 +232,7 @@ class model_timesheet
               }
               else if($sqldata['date']==$today)
               {
-                //echo strtotime(date($today." ".$sqldata['start_time']));exit;
-                //echo strtotime($sqldata['clock_in'])+($MinimumWorkingHours*60);exit;
-                //echo strtotime($sqldata['clock_in']);exit;
+
                 if(strtotime($now_today)>(strtotime($sqldata['clock_in'])+($MinimumWorkingHours*60)))
                 {
                   // normal punch
@@ -245,6 +289,24 @@ class model_timesheet
              return array('code' => 'punch_in_error','data'=>'Punch in time not found' );
           }
 
+          function TimesheetSetHoliday($request)
+          {
+            // get job details
+            global $db;
+            $DBC=$db::dbconnect();
+            $request_data['timesheet_id']=$request['timesheet_id'];
+            $TimesheetData=model_timesheet::GetTimeSheet($request_data);
+            if($TimesheetData[0]['holiday'] && $TimesheetData[0]['holiday']!='P')
+            {
+              $sql1 = $DBC->prepare("UPDATE `time_sheet` SET `holiday`=?, `holiday_changed_by`=? WHERE  `id`=?");
+              $sql1->bind_param("sii", $request['status'],$request['uid'],$request['timesheet_id']);
+              $sql1->execute();
+              $affected_Sheet=$sql1->affected_rows;
+
+            }
+            return $affected_Sheet;
+          }
+
           function CreateTimeSheet($contracts_id,$jobid,$jobseekerid,$date,$work_days_type)
           {
             include_once('model/Holiday.php');
@@ -263,7 +325,7 @@ class model_timesheet
             else {
               $is_holiday='N';
             }
-            $sql=$DBC->prepare("INSERT INTO `time_sheet` (`contracts_id`,`job_id`, `job_seeker_id`, `date`, `day`, `holiday` ) VALUES (?, ?, ?, ?, ?, ?)");
+            $sql=$DBC->prepare("INSERT INTO `time_sheet` (`contracts_id`,`job_id`, `jobseeker_id`, `date`, `day`, `holiday` ) VALUES (?, ?, ?, ?, ?, ?)");
             $sql->bind_param("iiisss", $contracts_id, $jobid, $jobseekerid, $date, $day, $is_holiday);
             $sql->execute();
             $insertId=$sql->insert_id;

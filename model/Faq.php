@@ -1,12 +1,12 @@
 <?php
 class model_faq
 {
-  function CreateFaq($H_name,$H_date)
+  function CreateFaq($request)
   {
     global $db;
     $DBC=$db::dbconnect();
-    $sql=$DBC->prepare("INSERT INTO `faq` (`name`, `date`) VALUES (?, ?)");
-    $sql->bind_param("ss", $H_name,$H_date);
+    $sql=$DBC->prepare("INSERT INTO `faq` (`name`, `body`, `type`) VALUES (?, ?, ?)");
+    $sql->bind_param("ssi", $request['name'],$request['body'],$request['type']);
     $sql->execute();
     $insertId=$sql->insert_id;
     return $insertId;
@@ -29,22 +29,28 @@ class model_faq
     $DBC=$db::dbconnect();
     if($request['id'])
     {
-      $sql = $DBC->prepare("SELECT * FROM `faq` where `id`=? ");
-      $sql->bind_param("i", $request['id']);
+      if($request['type'])
+      {
+        $sql = $DBC->prepare("SELECT * FROM `faq` WHERE `type`=? AND  `id`=?");
+        $sql->bind_param("ii", $request['type'],$request['id']);
+      }
+      else {
+        $sql = $DBC->prepare("SELECT * FROM `faq` WHERE `id`=?");
+        $sql->bind_param("i", $request['id']);
+      }
     }
-    else if($request['date'])
+    else
     {
-    //  echo $request['date'];
-      $sql = $DBC->prepare("SELECT * FROM `faq` where `date`=? ");
-      $sql->bind_param("s", $request['date']);
-    }
-    else if($request['name'])
-    {
-      $sql = $DBC->prepare("SELECT * FROM `faq` where `name`=? ");
-      $sql->bind_param("s", $request['name']);
-    }
-    else {
-      return 'no data';
+
+      if($request['type'])
+      {
+        $sql = $DBC->prepare("SELECT `name`,`id` FROM `faq` WHERE `type`=?");
+        $sql->bind_param("i", $request['type']);
+      }
+      else {
+        $sql = $DBC->prepare("SELECT `name`,`id` FROM `faq`");
+      }
+
     }
 
     $sql->execute();
@@ -58,6 +64,8 @@ class model_faq
     }
     return $sqldata;
   }
+
+
 
   function UpdateFaq($request)
   {
@@ -86,8 +94,8 @@ class model_faq
       if(is_array($getdetail))
       {
       $DBC=$db::dbconnect();
-      $sql=$DBC->prepare("UPDATE `faq` SET `name`=?, `date`=? WHERE  `id`=?");
-      $sql->bind_param("ssi", $request['name'], $request['date'], $request['id']);
+      $sql=$DBC->prepare("UPDATE `faq` SET `name`=?, `body`=?, `type`=? WHERE  `id`=?");
+      $sql->bind_param("ssii", $request['name'], $request['body'],$request['type'], $request['id']);
       $sql->execute();
       return $sql->affected_rows;
       }

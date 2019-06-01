@@ -3,16 +3,20 @@ include_once('model/Timesheet.php');
 class controller_Timesheet
 {
 
-  function GetJobseekerTimeSheet()
+  function GetTimeSheet()
   {
     global $request,$CurrentUser;
     if($CurrentUser->access=="Jobseeker")
     {
       $request['jobseekerid']=$CurrentUser->id;
     }
-    if($request['jobseekerid'] && $request['from'] && $request['to'])
+    if ($CurrentUser->access=="employer") {
+      $request['employerid']=$CurrentUser->id;
+    }
+
+    if($request['contractid'] || $request['timesheet_id'])
     {
-      $result=model_timesheet::GetJobseekerTimeSheet($request['jobseekerid'],$request['from'],$request['to']);
+      $result=model_timesheet::GetTimeSheet($request);
       if(is_array($result))
       {
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
@@ -129,6 +133,27 @@ class controller_Timesheet
           else {
             lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>$result));
           }
+
+        }
+        else {
+          lib_ApiResult::JsonEncode(array('status'=>500,'result'=>"Error "));
+        }
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'invalide timesheet id / out time'));
+      }
+    }
+
+    function TimesheetSetHoliday()
+    {
+      global $request,$CurrentUser;
+      if(($request['status']=='Y' || $request['status']=='N' || $request['status']=='P') && $request['timesheet_id'])
+      {
+        $request['uid']=$CurrentUser->id;
+        $result=model_timesheet::TimesheetSetHoliday($request);
+        if($result)
+        {
+              lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'updated'));
 
         }
         else {
