@@ -9,6 +9,7 @@ class model_timesheet
 
       function GetTimeSheet($request)
       {
+
         global $db;
         $DBC=$db::dbconnect();
 
@@ -28,7 +29,7 @@ class model_timesheet
           $data_type.='i';
           $params[]=$request['jobseekerid'];
         }
-        if($request['from'] && $request['from'])
+        if($request['from'] && $request['to'])
         {
           $sql_query.=" AND `date` BETWEEN  ? AND ? ";
           $data_type.='ss';
@@ -36,26 +37,6 @@ class model_timesheet
           $params[]=$request['to'];
         }
 
-
-        /*
-        if($request['timesheet_id'])
-        {
-          $sql = $DBC->prepare("SELECT * FROM time_sheet WHERE `id`=? ");
-          $sql->bind_param("i",$request['timesheet_id']);
-        }
-        elseif($request['jobseekerid'])
-        {
-          echo 2;
-          $sql = $DBC->prepare("SELECT * FROM time_sheet WHERE `contracts_id`=? AND `jobseeker_id`=?");
-          $sql->bind_param("ii", $request['contractid'],$request['jobseekerid']);
-        }
-        else {
-          echo 1;
-          echo $request['contractid'];
-          $sql = $DBC->prepare("SELECT * FROM time_sheet WHERE `contracts_id`=? ");
-          $sql->bind_param("i", $request['contractid']);
-        }
-        */
 
         $sql = $DBC->prepare($sql_query);
         $sql->bind_param($data_type, ...$params);
@@ -79,6 +60,7 @@ class model_timesheet
             $today=date("Y-m-d");
             $yesterday=date('Y-m-d', strtotime('-1 days'));
             $nextday=date('Y-m-d', strtotime('+1 days'));
+            $nextday_addday=date('Y-m-d', strtotime('+2 days'));
             // get job details
             $sql = $DBC->prepare("SELECT contracts.`deleted` as contarct_status, job_list.job_name, job_list.`status` AS job_status, company.`name` AS company_name, job_list.grace_period, job_list.start_time, job_list.end_time, job_list.job_no, job_list.`from`,job_list.`to` FROM  contracts
             INNER JOIN job_list ON job_list.id=contracts.job_id INNER JOIN company ON job_list.employer_id=company.id
@@ -93,42 +75,47 @@ class model_timesheet
                 $sqldata= $row;
               }
             }
+
             $jobtime['start_time']=$sqldata['start_time'];
             $jobtime['end_time']=$sqldata['end_time'];
 
-            if($sqldata['contarct_status']==1)
+            if($sqldata['contarct_status']!=1)
             {
-              return array('contract_status' => $sqldata['contarct_status'],'result'=> "contract closed");
-            }
-            //$sqldata['from']="2019-05-29";
-            if($sqldata['from']<$today)
-            {
-              $yesterdayJob=model_timesheet::GetJobseekerTimeSheet($jobseekerid,$yesterday,$yesterday);
-            }
-            if($sqldata['from']==$today || strtotime($sqldata['start_time'])<strtotime("+".$BeforePunchIn." minutes"))
-            {
-              $CurrentDayJob=model_timesheet::GetJobseekerTimeSheet($jobseekerid,$today,$today);
-              $yesterdayJob=null;
+              $contract_status='open';
             }
 
-
-            if(!$CurrentDayJob && !$yesterdayJob)
+            if($sqldata['contarct_status']==1 || $sqldata['to']<$yesterday)
             {
-              return array('contract_status' => $sqldata['job_status'],'result'=> "Your contract start at ".$sqldata['from']." - ".$sqldata['start_time']);
-
+              return array('contract_status' => 'closed','result'=> "contract closed");
             }
-            else if ($CurrentDayJob && !$yesterdayJob && strtotime($sqldata['start_time'])>strtotime("+".$BeforePunchIn." minutes")) {
-              return array('contract_status' => $sqldata['contarct_status'],'result'=> "Your contract start today at ".$sqldata['start_time']);
 
-            }else if ($yesterdayJob && strtotime($sqldata['start_time'])>strtotime("-".$BeforePunchIn." minutes")) {
-              return array('contract_status' => $sqldata['contarct_status'],'result'=> $yesterdayJob[0], 'job_time'=>$jobtime);
+            $request_dta['contractid']=$contractid;
+            $request_dta['from']=$yesterday;
+            $request_dta['to']=$yesterday;
+            $yesterdayJob=model_timesheet::GetTimeSheet($request_dta);
+
+            $request_dta['contractid']=$contractid;
+            $request_dta['from']=$today;
+            $request_dta['to']=$today;
+            $CurrentDayJob=model_timesheet::GetTimeSheet($request_dta);
+
+            if($sqldata['from']>$today) {
+                return array('contract_status' => $contract_status,'result'=> "Your contract start at ".$sqldata['from']." - ".$sqldata['start_time'],'job_time'=>$jobtime);
             }
-            else if($CurrentDayJob && strtotime($sqldata['start_time'])<strtotime("+".$BeforePunchIn." minutes"))
+            elseif(!$yesterdayJob[0]['clock_verified_out'] && !$yesterdayJob[0]['clock_out'] && ( $yesterdayJob[0]['clock_in'] || $yesterdayJob[0]['clock_verified_in'] ) && strtotime($sqldata['start_time'])>strtotime("+".$BeforePunchIn." minutes") )
             {
-              return array('contract_status' => $sqldata['contarct_status'],'result'=> $CurrentDayJob[0], 'job_time'=>$jobtime);
+                return array('contract_status' => $contract_status,'result'=> $yesterdayJob,'job_time'=>$jobtime);
             }
-
-            return array('contract_status' => $sqldata['contarct_status'],'result'=> "contract closed");
+            elseif($CurrentDayJob[0] && strtotime($sqldata['start_time'])<strtotime("+".$BeforePunchIn." minutes"))
+            {
+                return array('contract_status' => $contract_status,'result'=> $CurrentDayJob,'job_time'=>$jobtime);
+            }elseif ($CurrentDayJob[0] && strtotime($sqldata['start_time'])>strtotime("+".$BeforePunchIn." minutes")){
+              return array('contract_status' => $contract_status,'result'=> "Your job start at today - ".$sqldata['start_time'],'job_time'=>$jobtime);
+            }
+            else
+            {
+              return array('contract_status' => 'closed','result'=> "contract closed");
+            }
           }
 
           function PunchIn($jobseekerid,$timesheet_id)
@@ -200,10 +187,10 @@ class model_timesheet
             $nextday=date('Y-m-d', strtotime('+1 days'));
 
             // get job details
-            global $db,$MinimumWorkingHours,$BeforePunchIn;
+            global $db,$MinimumWorkingHours,$BeforePunchIn,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary;
             $DBC=$db::dbconnect();
-            $sql = $DBC->prepare("SELECT time_sheet.clock_verified_in, time_sheet.clock_verified_out, time_sheet.clock_in, time_sheet.clock_out, job_list.start_time, job_list.end_time, time_sheet.date FROM time_sheet
-              INNER JOIN contracts ON contracts.id = time_sheet.contracts_id INNER JOIN job_list ON job_list.id = contracts.job_id
+            $sql = $DBC->prepare("SELECT time_sheet.clock_verified_in, time_sheet.clock_verified_out, time_sheet.clock_in, time_sheet.clock_out, job_list.start_time, job_list.end_time, time_sheet.DATE, job_list.grace_period,job_list.over_time_rounding,job_list.over_time_minimum,job_list.work_days_type,job_list.jobseeker_salary
+              FROM time_sheet INNER JOIN contracts ON contracts.id = time_sheet.contracts_id INNER JOIN job_list ON job_list.id = contracts.job_id
               WHERE time_sheet.`id`=? AND time_sheet.`jobseeker_id`=? AND (time_sheet.`clock_in` IS NOT NULL OR time_sheet.`clock_verified_in` IS NOT NULL) AND contracts.`deleted`=0 AND time_sheet.`date` BETWEEN ? AND ?");
             $sql->bind_param("iiss", $timesheet_id, $jobseekerid, $yesterday, $today);
             $sql->execute();
@@ -258,7 +245,7 @@ class model_timesheet
           function VerifiedPunchOut($outtime,$timesheet_id,$userid)
           {
             // get job details
-            global $db,$MinimumWorkingHours,$BeforePunchIn;
+            global $db,$MinimumWorkingHours,$BeforePunchIn,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary,$MaximumOTHoursPerMonth,$MaximumWorkingHoursPerDay;
             $DBC=$db::dbconnect();
             $sql2 = $DBC->prepare("UPDATE `time_sheet` SET `clock_verified_out`=?, `clock_out_verified_by`=? WHERE  `id`=?");
             $sql2->bind_param("sii", $outtime,$userid,$timesheet_id);
@@ -290,6 +277,24 @@ class model_timesheet
           }
 
           function TimesheetSetHoliday($request)
+          {
+            // get job details
+            global $db;
+            $DBC=$db::dbconnect();
+            $request_data['timesheet_id']=$request['timesheet_id'];
+            $TimesheetData=model_timesheet::GetTimeSheet($request_data);
+            if($TimesheetData[0]['holiday'] && $TimesheetData[0]['holiday']!='P')
+            {
+              $sql1 = $DBC->prepare("UPDATE `time_sheet` SET `holiday`=?, `holiday_changed_by`=? WHERE  `id`=?");
+              $sql1->bind_param("sii", $request['status'],$request['uid'],$request['timesheet_id']);
+              $sql1->execute();
+              $affected_Sheet=$sql1->affected_rows;
+
+            }
+            return $affected_Sheet;
+          }
+
+          function TimesheetSetNotes($request)
           {
             // get job details
             global $db;

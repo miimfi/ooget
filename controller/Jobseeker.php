@@ -197,10 +197,7 @@ class controller_Jobseeker
       $request['jobseekerid']=$CurrentUser->id;
     }
 
-      $result=model_Jobseeker::GetJobseeker($request['jobseekerid'],$request['pending']);
-
-
-
+    $result=model_Jobseeker::GetJobseeker($request['jobseekerid'],$request['pending']);
     if($result)
     {
       lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));

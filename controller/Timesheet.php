@@ -22,7 +22,7 @@ class controller_Timesheet
         lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
       }
       else {
-        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'no timesheet'));
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>'no timesheet'));
       }
     }
     else {

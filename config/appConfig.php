@@ -1,11 +1,27 @@
 <?php
-global $Jobseeker_Allow_Module,$BeforePunchIn,$MinimumWorkingHours;
+global $Jobseeker_Allow_Module,$BeforePunchIn,$MinimumWorkingHours,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary,$MaximumOTHoursPerMonth,$MaximumWorkingHoursPerDay;
 
 // set allow to jobseeker to bunch befor clock_in time (min)
 $BeforePunchIn=15;
-// set minimum punch out time
+
+// set minimum punch out time (jobseeker can't punch_out before clock_in + $MinimumWorkingHours )
 $MinimumWorkingHours=15;
 
+//salary = job_salary * $HolidaySalary (15=10*1.5)
+$HolidaySalary=1.5;
+
+//salary = job_salary * $PublicHolidaySalary (20=10*2)
+$PublicHolidaySalary=2;
+
+//salary = job_salary * $OverTimetSalary (15=10*1.5) - normal working days
+$OverTimetSalary=1.5;
+$HolidayOTSalary=1.5;
+$PublicHolidayOTSalary=2;
+$MaximumOTHoursPerMonth=0; // Under the Employment Act, overtime not more than 72 hours a month.
+$MaximumWorkingHoursPerDay=0; // Under the Employment Act, maximum working hors not more than 12 hours a day.
+
+//invoice GST in %
+$invoiceGST=7;
 
 $Jobseeker_Allow_Module= array(
   array('module' => 'Job','mode'=>'GetOpenJobList'),
