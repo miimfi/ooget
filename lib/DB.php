@@ -38,6 +38,7 @@ class lib_DB
 		$result =$DBC->query($sql);
 		return $result;
 	}
+  //===============================
     public function dbconnect()
     {
 	      global $dbconfig;

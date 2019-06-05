@@ -40,6 +40,47 @@ class controller_Job
     }
   }
 
+  function UpdateJob()
+  {
+    global $request, $CurrentUser;
+    if($request['jobid'])
+    {
+      $request['current_user']=$CurrentUser->id;
+      if($CurrentUser->companyid>0)
+      {
+          $request['employer_id']=$CurrentUser->companyid;
+      }
+      $getJobDetails=model_Job::GetJobDetails($request['jobid']);
+      if($getJobDetails['status']!=1)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job not pending'));
+      }
+      if(is_array($getJobDetails))
+      {
+        foreach ($getJobDetails as $key => $value) {
+          if(!array_key_exists($key,$request))
+          {
+            $request[$key]=$value;
+          }
+        }
+        $result=model_Job::UpdateJob($request);
+        if($result)
+        {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Job Updated'));
+        }
+        else {
+          lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'error / alredy Updated'));
+        }
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'invalid job id'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'invalid job id'));
+    }
+  }
+
 //  pendingjob, alljob, livejob, openjob, closedjob, JobapliedList (based on job)
 //appliedjob(appliedjob, offered), savedjob, matchedjob
   function GetAllJobList()
@@ -221,6 +262,7 @@ class controller_Job
   function JobApply()
   {
     global $request, $CurrentUser;
+    //echo $CurrentUser->access."==".$request['jobid']."==".$CurrentUser->status;
     if($CurrentUser->access=='Jobseeker' && $request['jobid'] && $CurrentUser->status==1)
     {
       $result=model_Job::JobApply($CurrentUser->id,$request['jobid']);

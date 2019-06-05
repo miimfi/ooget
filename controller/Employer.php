@@ -118,6 +118,34 @@ class controller_Employer
     }
   }
 
+  function ChangeEmployerStatus()
+  {
+    global $request;
+    isAdmin();
+    if($request['employerid'])
+    {
+      $result=model_Employer::ChangeEmployerStatus($request);
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Employer ID is empty'));
+    }
+  }
+
+  function AddEmployerCode()
+  {
+    global $request;
+    isAdmin();
+    if($request['employerid'])
+    {
+      $result=model_Employer::AddEmployerCode($request);
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Employer ID is empty'));
+    }
+  }
+
   function FindEmployer()
   {
     global $request;

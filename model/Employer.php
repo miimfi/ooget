@@ -6,17 +6,22 @@ class model_Employer
 	{
 		include_once('model/User.php');
 		global $CurrentUser,$request,$db;
+		if($CurrentUser->access=='admin')
+		{
+			$CompanyStatus=2;
+		}
+		else {
+			$CompanyStatus=1;
+		}
 		$DBC=$db::dbconnect();
-		$sql=$DBC->prepare("INSERT INTO `company` (`name`, `profile`,`uen`,`companycode`,`industry`,`country`,`createby`) VALUES (?, ?, ?, ?, ?, ?, ?)");
-		$sql->bind_param("ssssiss",$request['companyname'],$request['profile'],$request['uen'],$request['companycode'],$request['industry'],$request['country'],$CurrentUser->id);
+		$sql=$DBC->prepare("INSERT INTO `company` (`name`, `profile`,`uen`,`companycode`,`industry`,`country`,`createby`,`status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+		$sql->bind_param("ssssissi",$request['companyname'],$request['profile'],$request['uen'],$request['companycode'],$request['industry'],$request['country'],$CurrentUser->id,$CompanyStatus);
 		$sql->execute();
 		$insertId=$sql->insert_id;
 		//$request['name'],$request['email'],$request['password'],$request['type'],$CurrentUser->id,$request['role'],$request['companyid']
 		$userdetails= array('name'=>$request['username'],'email'=>$request['useremail'],'password'=>$request['password'],'type'=>'employer','companyid'=>$insertId);
 		$userInsertId=model_user::CreateUser($userdetails);
-
 		return $insertId;
-
 	}
 
 	function Imagepathupdate($id,$ImagePath)
@@ -27,6 +32,27 @@ class model_Employer
 		$sql2->bind_param("si", $ImagePath,$id);
 		$sql2->execute();
 		return $sql->affected_rows;
+	}
+
+	function ChangeEmployerStatus($request)
+	{
+		global $db;
+		$DBC=$db::dbconnect();
+		$sql2 = $DBC->prepare("UPDATE `company` SET `status`=? WHERE  `id`=?");
+		$sql2->bind_param("ii", $request['status'],$request['employerid']);
+		$sql2->execute();
+		return $sql2->affected_rows;
+	}
+
+	function AddEmployerCode($request)
+	{
+		global $db;
+		$DBC=$db::dbconnect();
+		$status=2;
+		$sql2 = $DBC->prepare("UPDATE `company` SET `status`=?, `companycode`=? WHERE  `id`=?");
+		$sql2->bind_param("isi", $status,$request['employercode'],$request['employerid']);
+		$sql2->execute();
+		return $sql2->affected_rows;
 	}
 
 	function CheckCompanyExist($uen)

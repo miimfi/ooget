@@ -30,6 +30,47 @@ class controller_Timesheet
     }
   }
 
+    function TimesheetSetNotes()
+    {
+      global $request,$CurrentUser;
+
+      if($request['timesheetid'] && $request['notes'])
+      {
+        $result=model_timesheet::TimesheetSetNotes($request['timesheetid'],$request['notes'],$CurrentUser->id,$CurrentUser->companyid);
+        if($result)
+        {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Notes added'));
+        }
+        else {
+          lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Update error'));
+        }
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Check input'));
+      }
+    }
+
+    function JobseekerLateInfo()
+    {
+      global $request,$CurrentUser;
+
+      if($request['timesheetid'] && $request['lateinfo'] && $CurrentUser->access=="Jobseeker")
+      {
+        $result=model_timesheet::JobseekerLateInfo($request['timesheetid'],$request['lateinfo'],$CurrentUser->id);
+        if($result)
+        {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Notes added'));
+        }
+        else {
+          lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Update error'));
+        }
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Check input'));
+      }
+    }
+
+
     function GetTodayJobseekerTimeSheet()
     {
       global $request,$CurrentUser;

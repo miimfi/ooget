@@ -48,7 +48,7 @@ class model_terms
     if($num_of_rows>0)
     {
       while($row = $result->fetch_assoc()) {
-        $sqldata[] = $row;
+        $sqldata = $row;
       }
     }
     return $sqldata;

@@ -78,6 +78,8 @@ class model_timesheet
 
             $jobtime['start_time']=$sqldata['start_time'];
             $jobtime['end_time']=$sqldata['end_time'];
+            $jobtime['from']=$sqldata['from'];
+            $jobtime['to']=$sqldata['to'];
 
             if($sqldata['contarct_status']!=1)
             {
@@ -202,14 +204,14 @@ class model_timesheet
                 $sqldata= $row;
               }
             }
-
             if($sqldata['clock_verified_out'] || $sqldata['clock_out'])
             {
               $C_status="Already ".($sqldata['clock_verified_out']?"verified : ".$sqldata['clock_verified_out']:"punch out at ".$sqldata['clock_out']);
               return array('code' => ($sqldata['clock_verified_out']?'clock_out_verified':'already_punch_out'),'data'=>$C_status );
             }
             else {
-              if($sqldata['date']==$yesterday && strtotime($sqldata['start_time'])>strtotime("-".$BeforePunchIn." minutes"))
+
+              if($sqldata['DATE']==$yesterday && strtotime($sqldata['start_time'])>strtotime("-".$BeforePunchIn." minutes"))
               {
                 // code for punch yesterday
                 $sql2 = $DBC->prepare("UPDATE `time_sheet` SET `clock_out`=? WHERE  `id`=?");
@@ -217,9 +219,8 @@ class model_timesheet
                 $sql2->execute();
                 $affected_joblist=$sql2->affected_rows;
               }
-              else if($sqldata['date']==$today)
+              else if($sqldata['DATE']==$today)
               {
-
                 if(strtotime($now_today)>(strtotime($sqldata['clock_in'])+($MinimumWorkingHours*60)))
                 {
                   // normal punch
@@ -294,21 +295,36 @@ class model_timesheet
             return $affected_Sheet;
           }
 
-          function TimesheetSetNotes($request)
+          function TimesheetSetNotes($id,$notes,$uesrid,$companyid=0)
           {
-            // get job details
             global $db;
             $DBC=$db::dbconnect();
-            $request_data['timesheet_id']=$request['timesheet_id'];
-            $TimesheetData=model_timesheet::GetTimeSheet($request_data);
-            if($TimesheetData[0]['holiday'] && $TimesheetData[0]['holiday']!='P')
+            if($companyid>0)
             {
-              $sql1 = $DBC->prepare("UPDATE `time_sheet` SET `holiday`=?, `holiday_changed_by`=? WHERE  `id`=?");
-              $sql1->bind_param("sii", $request['status'],$request['uid'],$request['timesheet_id']);
-              $sql1->execute();
-              $affected_Sheet=$sql1->affected_rows;
-
+              $sql1 = $DBC->prepare("UPDATE `time_sheet` INNER JOIN  job_list ON job_list.id=time_sheet.job_id
+                                      SET `notes`=?, `note_by`=?
+                                      WHERE time_sheet.`id`=? AND job_list.employer_id=?");
+              $sql1->bind_param("siii", $notes,$uesrid,$id,$companyid);
             }
+            else {
+              $sql1 = $DBC->prepare("UPDATE `time_sheet` SET `notes`=?, `note_by`=?
+                                      WHERE time_sheet.`id`=?");
+              $sql1->bind_param("sii", $notes,$uesrid,$id);
+            }
+
+            $sql1->execute();
+            $affected_Sheet=$sql1->affected_rows;
+            return $affected_Sheet;
+          }
+
+          function JobseekerLateInfo($id,$lateInfo,$jobseekerid)
+          {
+            global $db;
+            $DBC=$db::dbconnect();
+            $sql1 = $DBC->prepare("UPDATE `time_sheet` SET `late_info`=? WHERE `id`=? AND jobseeker_id=?");
+            $sql1->bind_param("sii", $lateInfo,$id,$jobseekerid);
+            $sql1->execute();
+            $affected_Sheet=$sql1->affected_rows;
             return $affected_Sheet;
           }
 
@@ -335,6 +351,11 @@ class model_timesheet
             $sql->execute();
             $insertId=$sql->insert_id;
             return $insertId;
+          }
+
+          function TimesheetSalaryGen($id)
+          {
+
           }
 
 }

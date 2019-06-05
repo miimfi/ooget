@@ -14,20 +14,40 @@ class controller_Jobseeker
     }
     if($request['jobseekerid'])
     {
+      if($request['id1'])
+      {
+        $id_car="_ID1";
+      }else if($request['id2']) {
+        $id_car="_ID2";
+      }
+      else {
+        $id_car="_PROFILE";
+      }
       $target_dir = "media/profile/jobseeker/";
       $realfilename=explode('.',basename($_FILES["fileToUpload"]["name"]));
-      $target_file = $target_dir.$request['jobseekerid'].'.'.end($realfilename);
+      $target_file = $target_dir.$request['jobseekerid'].$id_car.'.'.end($realfilename);
+      $DB_imgpath=model_Jobseeker::CheckImageStatus($request['jobseekerid']);
+      if($id_car=='_ID1' && $DB_imgpath['id_imgpath1'])
+      {
+          lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'ID 1 Already uploaded'));
+      }
+      if($id_car=='_ID2' && $DB_imgpath['id_imgpath2'])
+      {
+          lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'ID 2 Already uploaded'));
+      }
       $uploadOk = true;
       $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
       // Check if image file is a actual image or fake image
-        $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
-        if($check !== false) {
+      $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
+      if($check !== false) {
+
           move_uploaded_file($_FILES["fileToUpload"]["tmp_name"],$target_file);
-          $result=model_Jobseeker::Imagepathupdate($CurrentUser->id,$target_file);
+          $result=model_Jobseeker::Imagepathupdate($CurrentUser->id,$target_file,$id_car);
+
           lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'upload','imgpath'=>$target_file));
-        } else {
+      } else {
           lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'failure to upload'));
-        }
+      }
     }
     else {
       lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'jobseeker id not found'));
@@ -37,35 +57,72 @@ class controller_Jobseeker
 
   function ImageDelete()
   {
-    global $CurrentUser;
-    $target_dir = "media/profile/jobseeker/";
-    $target_file = $target_dir.$CurrentUser->id.'.*';
-    foreach (glob($target_file) as $fileName) {
+    global $request,$CurrentUser;
+    if($request['id1'])
+    {
+      $id_car="_ID1";
+    }else if($request['id2']) {
+      $id_car="_ID2";
+    }
+    else {
+      $id_car="_PROFILE";
+    }
+
+    if($CurrentUser->access=="Jobseeker")
+    {
+      $request['jobseekerid']=$CurrentUser->id;
+    }
+    if($request['jobseekerid'])
+    {
+      $DB_imgpath=model_Jobseeker::CheckImageStatus($request['jobseekerid']);
+      if($request['id1'] && $DB_imgpath['id_imgpath1'])
+      {
+        isAdmin();
+        $fileName=$DB_imgpath['id_imgpath1'];
+      }
+      elseif($request['id2'] && $DB_imgpath['id_imgpath2'])
+      {
+        isAdmin();
+        $fileName=$DB_imgpath['id_imgpath2'];
+      }elseif($CurrentUser->access=="Jobseeker")
+      {
+        $fileName=$DB_imgpath['imgpath'];
+        //$result=model_Jobseeker::Imagepathupdate($request['jobseekerid'],null,$id_car);
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'Invalid jobseeker'));
+    }
+
      if(unlink($fileName))
      {
        $delete=true;
      }
-    }
       if(!$delete) {
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'Error'));
       } else {
-        $result=model_Jobseeker::Imagepathupdate($CurrentUser->id,$target_file);
+        $result=model_Jobseeker::Imagepathupdate($request['jobseekerid'],null,$id_car);
         lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'deleted'));
       }
   }
 
   function CreateJobseeker()
   {
-    global $request;
-    $ClientKey=$request['g-recaptcha-response'];
-    $Recaptcha=recaptcha($ClientKey);
-    if(!$Recaptcha=='success')
-    {lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'recaptcha failed'));}
+    global $request,$Recaptcha;
+    if( $Recaptcha=='ON')
+    {
+      $ClientKey=$request['g-recaptcha-response'];
+      $Recaptcha=recaptcha($ClientKey);
+    }
+    if(!$Recaptcha=='success' && $Recaptcha=='ON')
+    {
+      lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'recaptcha failed'));
+    }
     if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,5})$^", $request['email'])){
               lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
       }
-      else {
-    if($request['name'] && $request['email'] && $request['password'] && $request['country'] && $Recaptcha=='success')
+  else {
+    if($request['name'] && $request['email'] && $request['password'] && $request['country'] && ($Recaptcha=='success' ||  $Recaptcha=='OFF'))
     {
       $CheckEmail=model_Jobseeker::CheckEmail($request['email']);
       if(!$CheckEmail)
@@ -119,6 +176,7 @@ class controller_Jobseeker
   function UpdateJobseeker()
   {
     global $request,$CurrentUser;
+
     if($CurrentUser->access!='admin')
     {
       $request['jobseekerid']=$CurrentUser->id;

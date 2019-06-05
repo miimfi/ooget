@@ -41,6 +41,25 @@ class model_Job
     return $insertId;
   }
 
+  function UpdateJob($request)
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    $sql=$DBC->prepare("UPDATE job_list SET `project_name` =?, `job_name` =?, `department` =?, `employment_type` =?, `description` =?, `specializations` =?, `working_environment` =?, `pax_total` =?, `grace_period` =?, `over_time_rounding` =?, `over_time_minimum` =?, `from` =?, `to` =?, `start_time` =?, `end_time` =?, `work_days_type` =?, `postal_code` =?, `address` =?, `unit_no` =?, `region` =?, `location` =?, `charge_rate` =?, `markup_rate` =?, `markup_in` =?, `jobseeker_salary` =?, `markup_amount` =?, `auto_offered` =?, `auto_accepted` =?, `job_no` =? WHERE `id`=? AND `employer_id`=?");
+    $sql->bind_param("sssisssiiiissssisssssiisiiiisii",$request['project_name'], $request['job_name'], $request['department'], $request['employment_type'], $request['description'], $request['specializations'], $request['working_environment'], $request['pax_total'], $request['grace_period'], $request['over_time_rounding'],$request['over_time_minimum'], $request['from'], $request['to'], $request['start_time'], $request['end_time'], $request['work_days_type'], $request['postal_code'], $request['address'], $request['unit_no'], $request['region'], $request['location'], $request['charge_rate'], $request['markup_rate'], $request['markup_in'], $request['jobseeker_salary'], $request['markup_amount'], $request['auto_offered'], $request['auto_accepted'], $request['job_no'], $request['id'],$request['employer_id']);
+    $sql->execute();
+
+    if(is_array($request['break']))
+    {
+      $sql_break_delete=$DBC->prepare("DELETE FROM `job_break_list` WHERE  `job_id`=?");
+      $sql_break_delete->bind_param('i',$request['id']);
+      $sql_break_delete->execute();
+      $breaklistUpdate=model_Job::AddBreak($request['id'],$request['break']);
+    }
+
+    return ($sql->affected_rows || $breaklistUpdate?true:false);
+
+  }
 
     function GetAllJobList($employerid=0)
     {
@@ -224,7 +243,7 @@ class model_Job
         // get job break time
         if(is_array($sqldata))
         {
-        $sql = $DBC->prepare("SELECT job_break_list.`id` as break_id, `break_name`, `from`, `to`  FROM `job_break_list` WHERE `job_id`=?");
+        $sql = $DBC->prepare("SELECT `id` as break_id, `break_name`, `from`, `to`  FROM `job_break_list` WHERE `job_id`=?");
         $sql->bind_param("i", $id);
         $sql->execute();
         $result = $sql->get_result();

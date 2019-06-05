@@ -36,6 +36,7 @@ $Jobseeker_Allow_Module= array(
   array('module' => 'Timesheet','mode'=>'GetTodayJobseekerTimeSheet'),
   array('module' => 'Timesheet','mode'=>'PunchIn'),
   array('module' => 'Timesheet','mode'=>'PunchOut'),
+  array('module' => 'Timesheet','mode'=>'JobseekerLateInfo'),
   array('module' => 'Job','mode'=>'MatchedJob'),
   array('module' => 'Terms','mode'=>'GetTerms')
 );

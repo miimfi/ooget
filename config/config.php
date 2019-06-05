@@ -22,7 +22,7 @@ $JWTKey='MIICXQIBAAKBgQCqtM24cU6wcO6wn0jk2S3KNyWJzXurkMzmCnvDxLZ5H5wzR/Yx'; // k
 // google recapcha
 //$SiteKey="6Lc2L6IUAAAAAG0I8PuARFQibZcDRuU9vM8NPrG1";
 $SecretKey="6Lc2L6IUAAAAALMeBGsnTHy12WC_maY82MJ4nkiE";
-$Recaptcha='ON'; // ON / OFF
+$Recaptcha='OFF'; // ON / OFF
 
 
 

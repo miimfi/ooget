@@ -109,6 +109,10 @@ class model_Jobseeker
   {
     global $db;
     $DBC=$db::dbconnect();
+    if($status!=1)
+    {
+      $status=0;
+    }
     if($id)
     {
       $sql=$DBC->prepare("UPDATE `jobseeker` SET `status`=? WHERE  `id`=?");
@@ -122,11 +126,40 @@ class model_Jobseeker
 
   }
 
-  function Imagepathupdate($id,$ImagePath)
+  function CheckImageStatus($jobseekerid)
   {
     global $db;
     $DBC=$db::dbconnect();
-    $sql2 = $DBC->prepare("UPDATE `jobseeker` SET `imgpath`=? WHERE  `id`=?");
+    $sql = $DBC->prepare("SELECT `imgpath`,`id_imgpath1`,`id_imgpath2` FROM `jobseeker` WHERE  `id`=?");
+    $sql->bind_param("i", $jobseekerid);
+    $sql->execute();
+    $result = $sql->get_result();
+    $num_of_rows = $result->num_rows;
+    if($num_of_rows>0)
+    {
+      while($row = $result->fetch_assoc()) {
+        $getdetail= $row;
+      }
+    }
+    return $getdetail;
+  }
+
+  function Imagepathupdate($id,$ImagePath,$id_car)
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    if($id_car=="_ID1")
+    {
+      $sql2 = $DBC->prepare("UPDATE `jobseeker` SET `id_imgpath1`=? WHERE  `id`=?");
+    }
+    elseif($id_car=="_ID2")
+    {
+      $sql2 = $DBC->prepare("UPDATE `jobseeker` SET `id_imgpath2`=? WHERE  `id`=?");
+    }
+    else {
+      $sql2 = $DBC->prepare("UPDATE `jobseeker` SET `imgpath`=? WHERE  `id`=?");
+    }
+
     $sql2->bind_param("si", $ImagePath,$id);
     $sql2->execute();
     return $sql->affected_rows;
@@ -156,12 +189,11 @@ class model_Jobseeker
           $request[$key]=$value;
         }
       }
-
       if(is_array($getdetail))
       {
       $DBC=$db::dbconnect();
       $sql=$DBC->prepare("UPDATE `jobseeker` SET `firstname`=?, `lastname`=?, `password`=?, `country`=?, `dob`=?, `timezone`=?, `phone`=?, `mobile`=?, `address`=?, `city`=?, `status`=?, `bank_id`=?, `branch_code`=?, `account_no`=?, `experience_in`=?, `experience_year`=?, `experience_details`=?, `gender`=?, `nric`=?, `race`=?, `nationality`=?, `employment_type`=?, `region`=?, `location`=?, `notification`=?, `notification_off_from`=?, `notification_off_to`=?, `specializations`=?, `working_environment`=? WHERE  `id`=?");
-      $sql->bind_param("ssssssssssiisssisisiisssissssi", $request['firstname'], $request['lastname'], $request['password'], $request['country'], $request['dob'], $request['timezone'], $request['phone'], $request['mobile'], $request['address'], $request['city'], $request['status'], $request['bank_id'], $request['branch_code'], $request['account_no'], $request['experience_in'], $request['experience_year'], $request['experience_details'],$request['gender'], $request['nric'], $request['race'], $request['nationality'], $request['employment_type'], $request['region'], $request['location'], $request['notification'], $request['notification_off_from'], $request['notification_off_to'], $request['specializations'], $request['working_environment'], $request['jobseekerid']);
+      $sql->bind_param("ssssssssssiisssisisiisssissssi", $request['firstname'], $request['lastname'], $request['password'], $request['country'], $request['dob'], $request['timezone'], $request['phone'], $request['mobile'], $request['address'], $request['city'], $request['status'], $request['bank_id'], $request['branch_code'], $request['account_no'], $request['experience_in'], $request['experience_year'], $request['experience_details'],$request['gender'], $request['nric'], $request['race'],$request['nationality'], $request['employment_type'], $request['region'], $request['location'], $request['notification'], $request['notification_off_from'], $request['notification_off_to'], $request['specializations'], $request['working_environment'], $request['jobseekerid']);
       $sql->execute();
       return $sql->affected_rows;
       }
