@@ -4,7 +4,7 @@ class model_Job
 {
   function CreateJob($request)
   {
-    global $db;
+    global $db,$MinimumOTHours;
     $DBC=$db::dbconnect();
     $date1=date("Y")."-01-01 00:00:00";
     $date2=date("Y")."-12-31 23:59:59";
@@ -28,6 +28,12 @@ class model_Job
       $job_no="OOGET-".date("Y")."-0001";
     }
 // end job create number
+
+    if(!$request['over_time_minimum'])
+    {
+      $request['over_time_minimum']=$MinimumOTHours;
+    }
+
     $sql=$DBC->prepare("INSERT INTO `job_list` (`job_name`, `department`, `employment_type`, `description`, `specializations`, `working_environment`, `pax_total`, `grace_period`, `over_time_rounding`, `over_time_minimum`, `from`, `to`, `start_time`, `end_time`, `work_days_type`, `postal_code`, `address`, `unit_no`, `region`, `location`, `charge_rate`, `markup_rate`, `markup_in`, `jobseeker_salary`, `markup_amount`,`auto_offered`, `auto_accepted`, `project_name`,`employer_id`,`job_no`, `status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $sql->bind_param("ssisssiiiissssisssssiisiiiisisi", $request['job_name'], $request['department'], $request['employment_type'], $request['description'], $request['specializations'], $request['working_environment'], $request['pax_total'], $request['grace_period'], $request['over_time_rounding'], $request['over_time_minimum'], $request['from'], $request['to'], $request['start_time'], $request['end_time'], $request['work_days_type'], $request['postal_code'], $request['address'], $request['unit_no'], $request['region'], $request['location'], $request['charge_rate'], $request['markup_rate'], $request['markup_in'], $request['jobseeker_salary'], $request['markup_amount'], $request['auto_offered'], $request['auto_accepted'], $request['project_name'],$request['employer_id'],$job_no, $request['status']);
     $sql->execute();

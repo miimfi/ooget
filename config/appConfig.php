@@ -1,11 +1,17 @@
 <?php
-global $Jobseeker_Allow_Module,$BeforePunchIn,$MinimumWorkingHours,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary,$MaximumOTHoursPerMonth,$MaximumWorkingHoursPerDay;
+global $Jobseeker_Allow_Module,$BeforePunchIn,$MinimumWorkingHours,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary,$MaximumOTHoursPerMonth,$MaximumWorkingHoursPerDay,$WorkingHoursRound,$MinimumOTHours;
 
 // set allow to jobseeker to bunch befor clock_in time (min)
 $BeforePunchIn=15;
 
-// set minimum punch out time (jobseeker can't punch_out before clock_in + $MinimumWorkingHours )
-$MinimumWorkingHours=15;
+// set minimum punch out time in minits (jobseeker can't punch_out before clock_in + $MinimumWorkingHours )
+$MinimumWorkingHours=1; // it will be affect when jobseeker working hours is below job hours
+$MinimumOTHours=20;
+
+/* working hours round in minits
+(its avoid none round of time on salary calculation)
+eg:- jobseeker working hours = 28min, $WorkingHoursRound=10min, salary calculation time= 20min, 8min not Countable */
+$WorkingHoursRound=1;
 
 //salary = job_salary * $HolidaySalary (15=10*1.5)
 $HolidaySalary=1.5;
