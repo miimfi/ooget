@@ -5,6 +5,26 @@ use \Firebase\JWT\JWT;
 class controller_Jobseeker
 {
 
+  function IdVerifiedUpdate()
+  {
+    isAdmin();
+    global $request;
+    if($request['jobseekerid'])
+    {
+      $result=model_Jobseeker::IdVerifiedUpdate($request['jobseekerid'],$request['status']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>500,'success'=>true,'message'=>'updated'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'Update error'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'jobseeker id not found'));
+    }
+  }
+
   function ImageUpload()
   {
     global $CurrentUser,$request;
@@ -27,14 +47,11 @@ class controller_Jobseeker
       $realfilename=explode('.',basename($_FILES["fileToUpload"]["name"]));
       $target_file = $target_dir.$request['jobseekerid'].$id_car.'.'.end($realfilename);
       $DB_imgpath=model_Jobseeker::CheckImageStatus($request['jobseekerid']);
-      if($id_car=='_ID1' && $DB_imgpath['id_imgpath1'])
+      if(($id_car=='_ID1' || $id_car=='_ID2') && $DB_imgpath['id_verified']==1)
       {
-          lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'ID 1 Already uploaded'));
+          lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'ID card update locked'));
       }
-      if($id_car=='_ID2' && $DB_imgpath['id_imgpath2'])
-      {
-          lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'ID 2 Already uploaded'));
-      }
+
       $uploadOk = true;
       $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
       // Check if image file is a actual image or fake image
@@ -280,22 +297,30 @@ class controller_Jobseeker
     }
   }
 
-  function CheckEmail()
+  function CheckUnique()
   {
     global $request;
-    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,5})$^", $request['email'])){
-              lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
-      }
-      else
+    if($request['email'])
+    {
+      if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,6})$^", $request['email'])){
+                lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
+        }
+    }
+
+    if($request['email'] || $request['mobile'] || $request['nric'])
+    {
+      $result=model_Jobseeker::CheckUnique($request);
+      if(!is_array($result))
       {
-          $result=model_Jobseeker::CheckEmail($request['email']);
-          if(!is_array($result))
-          {
-            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'email id not found'));
-          } else {
-            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'email id found'));
-          }
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'not found'));
+      } else {
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'found'));
       }
+    }else {
+      lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>'invalid input'));
+    }
+
+
   }
 
   /*function GetAppliedList()

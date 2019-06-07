@@ -5,14 +5,15 @@
 include('controller/Users.php');
 $AuthResult=lib_jwt::Authentication();
 
-if(!$request)
+if(!$request || $request['imgv'])
 {
   //if(!$request && $AuthResult)
   $actual_link =$_SERVER[REQUEST_URI];
   $imgpath_tmp=explode("media",$actual_link);
-  if($imgpath_tmp[1])
+  $RealName=explode("?",$imgpath_tmp[1]);
+  if($RealName[0])
   {
-    $imgpath='./media'.$imgpath_tmp[1];
+    $imgpath='./media'.$RealName[0];
   if(file_exists($imgpath))
   {
     $im = file_get_contents($imgpath);
@@ -48,7 +49,7 @@ if($CurrentUser->access=='Jobseeker' && !CheckJobseekerModuleAccess())
   $request['module']='Jobseeker';
 }
 
-if($AuthResult || $request['mode']=='CreateEmployer' || $request['mode']=='Login' || $request['mode']=='CreateJobseeker' || $request['mode']=='CheckCompanyUenExist' || $request['mode']=='CheckEmail')
+if($AuthResult || $request['mode']=='CreateEmployer' || $request['mode']=='Login' || $request['mode']=='CreateJobseeker' || $request['mode']=='CheckCompanyUenExist' || $request['mode']=='CheckEmail' || $request['mode']=='CheckUnique')
 {
   $Modules;
   if($request['module'])

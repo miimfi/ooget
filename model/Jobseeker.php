@@ -12,13 +12,24 @@ class model_Jobseeker
     return $insertId;
   }
 
-  function CheckEmail($email)
+  function CheckUnique($request)
   {
-    global $request;
     global $db;
     $DBC=$db::dbconnect();
-    $sql = $DBC->prepare("SELECT `email` FROM jobseeker WHERE email =?");
-    $sql->bind_param("s", $email);
+    if($request['email'])
+    {
+      $sql = $DBC->prepare("SELECT `email` FROM jobseeker WHERE email =?");
+      $sql->bind_param("s", $request['email']);
+    }elseif($request['mobile'])
+    {
+      $sql = $DBC->prepare("SELECT `mobile` FROM jobseeker WHERE mobile =?");
+      $sql->bind_param("s", $request['mobile']);
+    }elseif($request['nric'])
+    {
+      $sql = $DBC->prepare("SELECT `nric` FROM jobseeker WHERE nric =?");
+      $sql->bind_param("s", $request['nric']);
+    }
+
     $sql->execute();
     $sqldata =$sql->get_result()->fetch_assoc();
     return $sqldata;
@@ -115,7 +126,7 @@ class model_Jobseeker
     }
     if($id)
     {
-      $sql=$DBC->prepare("UPDATE `jobseeker` SET `status`=? WHERE  `id`=?");
+      $sql=$DBC->prepare("UPDATE `jobseeker` SET `status`=?, SET `id_verified`=1 WHERE  `id`=?");
       $sql->bind_param("ii", $status,$id);
       $sql->execute();
       return $sql->affected_rows;
@@ -126,11 +137,26 @@ class model_Jobseeker
 
   }
 
+  function IdVerifiedUpdate($jobseekerid,$status)
+  {
+
+    global $db;
+    $DBC=$db::dbconnect();
+    if($status!=1)
+    {
+      $status=0;
+    }
+      $sql=$DBC->prepare("UPDATE `jobseeker` SET `id_verified`=? WHERE  `id`=?");
+      $sql->bind_param("ii", $status,$jobseekerid);
+      $sql->execute();
+      return $sql->affected_rows;
+  }
+
   function CheckImageStatus($jobseekerid)
   {
     global $db;
     $DBC=$db::dbconnect();
-    $sql = $DBC->prepare("SELECT `imgpath`,`id_imgpath1`,`id_imgpath2` FROM `jobseeker` WHERE  `id`=?");
+    $sql = $DBC->prepare("SELECT `imgpath`,`id_imgpath1`,`id_imgpath2`,`id_verified` FROM `jobseeker` WHERE  `id`=?");
     $sql->bind_param("i", $jobseekerid);
     $sql->execute();
     $result = $sql->get_result();

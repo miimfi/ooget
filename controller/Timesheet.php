@@ -50,6 +50,26 @@ class controller_Timesheet
       }
     }
 
+    function VerifiedTimesheet()
+    {
+      global $request,$CurrentUser;
+
+      if($request['timesheetid'])
+      {
+        $result=model_timesheet::VerifiedTimesheet($request['timesheetid'],$CurrentUser->id,$CurrentUser->companyid);
+        if($result)
+        {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Timesheet verified'));
+        }
+        else {
+          lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'error'));
+        }
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Check timesheetid'));
+      }
+    }
+
     function JobseekerLateInfo()
     {
       global $request,$CurrentUser;
