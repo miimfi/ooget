@@ -7,11 +7,92 @@ class model_timesheet
         return true;
       }
 
+      function GetJobTimesheetList($jobid,$from,$to,$companyid)
+      {
+        global $db;
+        $DBC=$db::dbconnect();
+        if($companyid>0)
+        {
+          $sql=$DBC->prepare("SELECT jobseeker.firstname, time_sheet.job_id, time_sheet.id AS timesheet_id, time_sheet.`date`, time_sheet.clock_in, time_sheet.clock_out, time_sheet.holiday, time_sheet.clock_verified_in,time_sheet.clock_verified_out
+                    FROM time_sheet INNER JOIN jobseeker ON jobseeker.id=time_sheet.jobseeker_id INNER JOIN job_list ON job_list.id=time_sheet.job_id
+                    WHERE time_sheet.`job_id`=? AND time_sheet.`date` BETWEEN ? AND ? AND job_list.employer_id=?");
+          $sql->bind_param("iss", $jobid,$from,$to,$companyid);
+        }
+        else {
+          $sql=$DBC->prepare("SELECT jobseeker.firstname, time_sheet.job_id, time_sheet.id AS timesheet_id, time_sheet.`date`, time_sheet.clock_in, time_sheet.clock_out, time_sheet.holiday, time_sheet.clock_verified_in,time_sheet.clock_verified_out
+                    FROM time_sheet INNER JOIN jobseeker ON jobseeker.id=time_sheet.jobseeker_id
+                    WHERE time_sheet.`job_id`=? AND time_sheet.`date` BETWEEN ? AND ?");
+          $sql->bind_param("iss", $jobid,$from,$to);
+        }
+
+        $sql->execute();
+        $result = $sql->get_result();
+        $num_of_rows = $result->num_rows;
+        if($num_of_rows>0)
+          {
+              while($row = $result->fetch_assoc()) {
+                  if($row['clock_in'] || $row['clock_verified_in'] )
+                  {
+                    $row['worked']='ON';
+                  }
+                  else {
+                    $row['worked']='OFF';
+                  }
+                  $sqldata[]= $row;
+                }
+          }
+
+        return $sqldata;
+      }
+
+      function GetJobContractTimesheetList($jobid,$from,$to,$companyid)
+      {
+        global $db;
+        $DBC=$db::dbconnect();
+        if($companyid>0)
+        {
+          $sql=$DBC->prepare("SELECT time_sheet.contracts_id,jobseeker.firstname, time_sheet.job_id, time_sheet.id AS timesheet_id, time_sheet.`date`, time_sheet.clock_in, time_sheet.clock_out, time_sheet.holiday, time_sheet.clock_verified_in,time_sheet.clock_verified_out
+                    FROM time_sheet INNER JOIN jobseeker ON jobseeker.id=time_sheet.jobseeker_id INNER JOIN job_list ON job_list.id=time_sheet.job_id WHERE time_sheet.`job_id`=? AND time_sheet.`date` BETWEEN ? AND ? AND job_list.employer_id=?");
+          $sql->bind_param("iss", $jobid,$from,$to,$companyid);
+        }
+        else {
+          $sql=$DBC->prepare("SELECT time_sheet.contracts_id,jobseeker.firstname, time_sheet.job_id, time_sheet.id AS timesheet_id, time_sheet.`date`, time_sheet.clock_in, time_sheet.clock_out, time_sheet.holiday, time_sheet.clock_verified_in,time_sheet.clock_verified_out
+                    FROM time_sheet INNER JOIN jobseeker ON jobseeker.id=time_sheet.jobseeker_id WHERE time_sheet.`job_id`=? AND time_sheet.`date` BETWEEN ? AND ?");
+          $sql->bind_param("iss", $jobid,$from,$to);
+        }
+
+        $sql->execute();
+        $result = $sql->get_result();
+        $num_of_rows = $result->num_rows;
+        if($num_of_rows>0)
+          {
+              while($row = $result->fetch_assoc()) {
+                  if($row['clock_in'] || $row['clock_verified_in'] )
+                  {
+                    $row['worked']='ON';
+                  }
+                  else {
+                    $row['worked']='OFF';
+                  }
+                  $sqldata[$row['contracts_id']][]= $row;
+                }
+          }
+
+          $timelist;
+          foreach ($sqldata as $key => $value) {
+            $rr['timesheet']=$sqldata[$key];
+            $rr['jobseekername']=$value[0]['firstname'];
+            //$temp_data[]=$value;
+            $timelist[]=$rr;
+          }
+
+        return $timelist;
+      }
+
       function GetTimeSheet($request)
       {
 
         global $db,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary;
-
         $DBC=$db::dbconnect();
         $data_type='i';
         $params[]=$request['contractid'];
@@ -201,7 +282,7 @@ class model_timesheet
             // get job details
             global $db,$MinimumWorkingHours,$BeforePunchIn,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary,$WorkingHoursRound;
             $DBC=$db::dbconnect();
-            $sql = $DBC->prepare("SELECT time_sheet.clock_verified_in, time_sheet.holiday, job_list.markup_amount, time_sheet.clock_verified_out, time_sheet.clock_in, time_sheet.clock_out, job_list.start_time, job_list.end_time, time_sheet.DATE, job_list.grace_period,job_list.over_time_rounding,job_list.over_time_minimum,job_list.work_days_type,job_list.jobseeker_salary
+            $sql = $DBC->prepare("SELECT time_sheet.job_id, time_sheet.clock_verified_in, time_sheet.holiday, job_list.markup_amount, time_sheet.clock_verified_out, time_sheet.clock_in, time_sheet.clock_out, job_list.start_time, job_list.end_time, time_sheet.DATE, job_list.grace_period,job_list.over_time_rounding,job_list.over_time_minimum,job_list.work_days_type,job_list.jobseeker_salary
               FROM time_sheet INNER JOIN contracts ON contracts.id = time_sheet.contracts_id INNER JOIN job_list ON job_list.id = contracts.job_id
               WHERE time_sheet.`id`=? AND time_sheet.`jobseeker_id`=? AND (time_sheet.`clock_in` IS NOT NULL OR time_sheet.`clock_verified_in` IS NOT NULL) AND contracts.`deleted`=0 AND time_sheet.`date` BETWEEN ? AND ?");
             $sql->bind_param("iiss", $timesheet_id, $jobseekerid, $yesterday, $today);
@@ -215,6 +296,19 @@ class model_timesheet
               }
             }else {
               return array('code' => 'timesheet_not_found','data'=>"Timesheet not found" );
+            }
+
+            $break_min=0;
+            $sql_break = $DBC->prepare("SELECT `from`,`to` FROM  job_break_list WHERE `job_id`=? AND `from`<`to`");
+            $sql_break->bind_param("i", $sqldata['job_id']);
+            $sql_break->execute();
+            $result_break = $sql_break->get_result();
+            $num_of_rows_break = $result_break->num_rows;
+            if($num_of_rows_break>0)
+            {
+              while($row = $result_break->fetch_assoc()) {
+                $break_min=$break_min+(strtotime($row['to'])-strtotime($row['from']))/60;
+              }
             }
 
 
@@ -263,7 +357,12 @@ class model_timesheet
                   $JobWorkingMin=((strtotime($sqldata['end_time']+86400))-strtotime($sqldata['start_time']))/60;
                 }
 
+                // without break
+                $JobWorkingMin=$JobWorkingMin-$break_min;
                 $TotalWorkingMin=round((strtotime($now_today)-strtotime(($sqldata['clock_verified_in']?$sqldata['clock_verified_in']:$sqldata['clock_in'])))/60);
+
+                // without break
+                $TotalWorkingMin=$TotalWorkingMin-$break_min;
 
                 //ot time calculation
                 $JobseekerOTmin=0;
@@ -349,7 +448,7 @@ class model_timesheet
             // get job details
             global $db,$MinimumWorkingHours,$BeforePunchIn,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary,$WorkingHoursRound;
             $DBC=$db::dbconnect();
-            $sql = $DBC->prepare("SELECT
+            $sql = $DBC->prepare("SELECT time_sheet.job_id,
               time_sheet.clock_verified_in, time_sheet.holiday, job_list.markup_amount, time_sheet.clock_verified_out, time_sheet.clock_in, time_sheet.clock_out, job_list.start_time, job_list.end_time, time_sheet.DATE, job_list.grace_period,job_list.over_time_rounding,job_list.over_time_minimum,job_list.work_days_type,job_list.jobseeker_salary
               FROM time_sheet INNER JOIN contracts ON contracts.id = time_sheet.contracts_id INNER JOIN job_list ON job_list.id = contracts.job_id
               WHERE time_sheet.`id`=? AND (time_sheet.`clock_in` IS NOT NULL OR time_sheet.`clock_verified_in` IS NOT NULL)");
@@ -364,6 +463,20 @@ class model_timesheet
               }
             }else {
               return array('code' => 'timesheet_not_found','data'=>"Timesheet not found" );
+            }
+
+
+            $break_min=0;
+            $sql_break = $DBC->prepare("SELECT `from`,`to` FROM  job_break_list WHERE `job_id`=? AND `from`<`to`");
+            $sql_break->bind_param("i", $sqldata['job_id']);
+            $sql_break->execute();
+            $result_break = $sql_break->get_result();
+            $num_of_rows_break = $result_break->num_rows;
+            if($num_of_rows_break>0)
+            {
+              while($row = $result_break->fetch_assoc()) {
+                $break_min=$break_min+(strtotime($row['to'])-strtotime($row['from']))/60;
+              }
             }
 
                 //set job salary based on day type
@@ -390,6 +503,7 @@ class model_timesheet
                 else {
                   $OTsalary=$OTsalary*$OverTimetSalary;
                 }
+
                 $OTsalaryMin=$OTsalary/60;
 
                 $TotalWorkingMin=0;$JobWorkingMin=0;
@@ -401,7 +515,13 @@ class model_timesheet
                   $JobWorkingMin=((strtotime($sqldata['end_time']+86400))-strtotime($sqldata['start_time']))/60;
                 }
 
+                // without break
+                $JobWorkingMin=$JobWorkingMin-$break_min;
+
                 $TotalWorkingMin=round((strtotime($now_today)-strtotime(($sqldata['clock_verified_in']?$sqldata['clock_verified_in']:$sqldata['clock_in'])))/60);
+
+                // without break
+                $TotalWorkingMin=$TotalWorkingMin-$break_min;
 
                 //ot time calculation
                 $JobseekerOTmin=0;
