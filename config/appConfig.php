@@ -44,7 +44,8 @@ $Jobseeker_Allow_Module= array(
   array('module' => 'Timesheet','mode'=>'PunchOut'),
   array('module' => 'Timesheet','mode'=>'JobseekerLateInfo'),
   array('module' => 'Job','mode'=>'MatchedJob'),
-  array('module' => 'Terms','mode'=>'GetTerms')
+  array('module' => 'Terms','mode'=>'GetTerms'),
+  array('module' => 'Timesheet','mode'=>'GetJobseekerContractTimesheetList')
 );
 
 

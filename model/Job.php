@@ -382,7 +382,23 @@ class model_Job
       }
     }
 
-
+    function GetJobBreakTime($jobid)
+    {
+      global $db;
+      $DBC=$db::dbconnect();
+      $sql = $DBC->prepare("SELECT break_name, `from` AS break_start, `to` AS break_end FROM job_break_list WHERE job_id=?");
+      $sql->bind_param("i", $jobid);
+      $sql->execute();
+      $result = $sql->get_result();
+      $num_of_rows = $result->num_rows;
+      if($num_of_rows>0)
+      {
+        while($row = $result->fetch_assoc()) {
+          $job_data[]= $row;
+        }
+      }
+      return $job_data;
+    }
 
     function JobOffered($Userid,$contracts_id)
     {

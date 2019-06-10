@@ -111,6 +111,30 @@ class controller_Timesheet
       }
     }
 
+    function GetJobseekerContractTimesheetList()
+    {
+      // report for get jobseeker's all timesheet based on contracts
+      global $request,$CurrentUser;
+      if($CurrentUser->access=="Jobseeker")
+      {
+        $request['jobseekerid']=$CurrentUser->id;
+      }
+      if($request['jobseekerid'] && $request['from'] && $request['to'])
+      {
+        $result=model_timesheet::GetJobseekerContractTimesheetList($request['jobseekerid'],$request['from'],$request['to'],$CurrentUser->companyid);
+        if($result)
+        {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+        }
+        else {
+          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>'timesheet not found'));
+        }
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Check jobseeker id / from / to'));
+      }
+    }
+
     function JobseekerLateInfo()
     {
       global $request,$CurrentUser;

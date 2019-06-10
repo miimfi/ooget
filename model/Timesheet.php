@@ -89,6 +89,61 @@ class model_timesheet
         return $timelist;
       }
 
+      function GetJobseekerContractTimesheetList($jobseekerid,$from,$to,$companyid)
+      {
+        include_once("model/Job.php");
+        global $db;
+        $DBC=$db::dbconnect();
+        if($companyid>0)
+        {
+          $sql=$DBC->prepare("SELECT time_sheet.*,jobseeker.firstname, time_sheet.id AS timesheet_id,
+job_list.`from` AS jobperiodfrom, job_list.`to` AS jobperiodto, job_list.start_time, job_list.end_time,job_list.jobseeker_salary AS job_hour_salary,company.name AS company_name
+FROM time_sheet
+INNER JOIN jobseeker ON jobseeker.id=time_sheet.jobseeker_id
+INNER JOIN job_list ON job_list.id=time_sheet.job_id
+INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeker_id`=? AND time_sheet.`date` BETWEEN ? AND ? AND job_list.employer_id=?");
+          $sql->bind_param("iss", $jobseekerid,$from,$to,$companyid);
+        }
+        else {
+          $sql=$DBC->prepare("SELECT time_sheet.*,jobseeker.firstname, time_sheet.id AS timesheet_id,
+job_list.`from` AS jobperiodfrom, job_list.`to` AS jobperiodto, job_list.start_time, job_list.end_time,job_list.jobseeker_salary AS job_hour_salary,company.name AS company_name
+FROM time_sheet
+INNER JOIN jobseeker ON jobseeker.id=time_sheet.jobseeker_id
+INNER JOIN job_list ON job_list.id=time_sheet.job_id
+INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeker_id`=? AND time_sheet.`date` BETWEEN ? AND ?");
+          $sql->bind_param("iss", $jobseekerid,$from,$to);
+        }
+
+        $sql->execute();
+        $result = $sql->get_result();
+        $num_of_rows = $result->num_rows;
+        if($num_of_rows>0)
+          {
+              while($row = $result->fetch_assoc()) {
+                  $sqldata[$row['contracts_id']][]= $row;
+                }
+          }
+
+          $timelist;
+          foreach ($sqldata as $key => $value) {
+            $rr['timesheet']=$sqldata[$key];
+            $rr['job']['job_id']=$value[0]['job_id'];
+            $rr['job']['jobperiodfrom']=$value[0]['jobperiodfrom'];
+            $rr['job']['jobperiodto']=$value[0]['jobperiodto'];
+            $rr['job']['starttime']=$value[0]['start_time'];
+            $rr['job']['endtime']=$value[0]['end_time'];
+            $rr['job']['job_salary']=$value[0]['job_hour_salary'];
+            $rr['job']['breaktime']=model_Job::GetJobBreakTime($rr['job']['job_id']);
+            $rr['companyname']=$value[0]['company_name'];
+            $rr['jobseekername']=$value[0]['firstname'];
+            //$temp_data[]=$value;
+            $timelist[]=$rr;
+          }
+
+          //timesheetreport
+        return $timelist;
+      }
+
       function GetTimeSheet($request)
       {
 
