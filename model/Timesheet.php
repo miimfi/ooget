@@ -47,9 +47,12 @@ class model_timesheet
 
       function GetEmployerContractTimesheetList($companyid)
       {
-        global $db;
+        global $db,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary;
         $DBC=$db::dbconnect();
-        $sql=$DBC->prepare("SELECT time_sheet.*, jobseeker.firstname,  time_sheet.id AS timesheet_id,job_list.job_name, job_list.job_no
+
+
+
+        $sql=$DBC->prepare("SELECT time_sheet.*, jobseeker.firstname,  time_sheet.id AS timesheet_id,job_list.job_name, job_list.job_no, job_list.charge_rate,job_list.markup_amount,job_list.jobseeker_salary
                             FROM time_sheet INNER JOIN jobseeker ON jobseeker.id=time_sheet.jobseeker_id INNER JOIN job_list ON job_list.id=time_sheet.job_id
                             WHERE job_list.employer_id=?");
           $sql->bind_param("i", $companyid);
@@ -60,6 +63,24 @@ class model_timesheet
         if($num_of_rows>0)
           {
               while($row = $result->fetch_assoc()) {
+
+
+                    // employer charge_rate calculate
+                    if($row['holiday']=="P")
+                    {
+                      $EmployerCharge=(($row['charge_rate']/60)*$PublicHolidaySalary)*$row['jobseeker_normal_working_min'];
+                      $EmployerOTCharge=(($row['charge_rate']/60)*$PublicHolidayOTSalary)*$row['jobseeker_ot_working_min'];
+                    }elseif($row['holiday']=="Y"){
+                      $EmployerCharge=(($row['charge_rate']/60)*$HolidaySalary)*$row['jobseeker_normal_working_min'];
+                      $EmployerOTCharge=(($row['charge_rate']/60)*$HolidayOTSalary)*$row['jobseeker_ot_working_min'];
+                    }else {
+                      $EmployerCharge=($row['charge_rate']/60)*$row['jobseeker_normal_working_min'];
+                      $EmployerOTCharge=(($row['charge_rate']/60)*$OverTimetSalary)*$row['jobseeker_ot_working_min'];
+                    }
+
+                    $row['employer_charge']=$EmployerCharge;
+                    $row['employer_ot_charge']=$EmployerOTCharge;
+                    $row['employer_total_charge']=$EmployerOTCharge+$EmployerCharge;
                     $jobList[$row['job_id']]['job_name']=$row['job_name'];
                     $jobList[$row['job_id']]['job_id']=$row['job_id'];
                     $jobList[$row['job_id']]['job_no']=$row['job_no'];
@@ -67,6 +88,7 @@ class model_timesheet
                     $contract[$row['job_id']][$row['contracts_id']]['jobseeker_name']=$row['firstname'];
                     $contract[$row['job_id']][$row['contracts_id']]['jobseeker_id']=$row['jobseeker_id'];
                     $contract[$row['job_id']][$row['contracts_id']]['contracts_id']=$row['contracts_id'];
+
                 }
           }
 
@@ -411,7 +433,31 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
 
           function PunchOut($jobseekerid,$timesheet_id)
           {
-            $today=date("Y-m-d");
+            $today=date("Y-m-d");//set job salary based on day type
+                $salary=$sqldata['jobseeker_salary'];
+                if($sqldata['holiday']=='Y')
+                {
+                  $salary=$salary*$HolidaySalary;
+                }
+                if($sqldata['holiday']=='P')
+                {
+                  $salary=$salary*$PublicHolidaySalary;
+                }
+                $salaryPerMini=$salary/60;
+
+                //set OT salary
+                $OTsalary=$sqldata['jobseeker_salary'];
+                if($sqldata['holiday']=='Y')
+                {
+                  $OTsalary=$OTsalary*$HolidayOTSalary;
+                }elseif($sqldata['holiday']=='P')
+                {
+                  $OTsalary=$OTsalary*$PublicHolidayOTSalary;
+                }
+                else {
+                  $OTsalary=$OTsalary*$OverTimetSalary;
+                }
+                $OTsalaryMin=$OTsalary/60;
             $now_today=date("Y-m-d H:i:s");
             $yesterday=date('Y-m-d', strtotime('-1 days'));
             $nextday=date('Y-m-d', strtotime('+1 days'));
