@@ -525,21 +525,20 @@ class model_Job
 
       if($JobseekerId>0 && $jobid>0)
       {
-        $sql = $DBC->prepare($select_query." WHERE contracts.`jobseeker_id`=? AND contracts.`job_id`=?");
-
+        $sql = $DBC->prepare($select_query." WHERE contracts.`jobseeker_id`=? AND contracts.`job_id`=? AND contracts.offer_rejected IS NULL  AND contracts.offer_accepted IS NULL");
         $sql->bind_param("ii", $JobseekerId,$jobid);
       }
       else if ($JobseekerId>0 && !$jobid) {
-        $sql = $DBC->prepare($select_query." WHERE contracts.`jobseeker_id`=? AND contracts.`deleted`!=1");
+        $sql = $DBC->prepare($select_query." WHERE contracts.`jobseeker_id`=? AND contracts.`deleted`!=1 AND contracts.offer_rejected IS NULL  AND contracts.offer_accepted IS NULL");
         $sql->bind_param("i", $JobseekerId);
       }
       else if(!$JobseekerId && $jobid>0)
       {
-        $sql = $DBC->prepare($select_query." WHERE contracts.`job_id`=? AND contracts.`deleted`!=1");
+        $sql = $DBC->prepare($select_query." WHERE contracts.`job_id`=? AND contracts.`deleted`!=1 AND contracts.offer_rejected IS NULL  AND contracts.offer_accepted IS NULL");
         $sql->bind_param("i", $jobid);
       }
       else {
-        $sql = $DBC->prepare($select_query." WHERE  `deleted`!=1 ");
+        $sql = $DBC->prepare($select_query." WHERE  `deleted`!=1 AND contracts.offer_rejected IS NULL  AND contracts.offer_accepted IS NULL");
       }
       $sql->execute();
       $result = $sql->get_result();

@@ -45,6 +45,88 @@ class model_timesheet
         return $sqldata;
       }
 
+      function GetEmployerContractTimesheetList($companyid)
+      {
+        global $db;
+        $DBC=$db::dbconnect();
+        $sql=$DBC->prepare("SELECT time_sheet.*, jobseeker.firstname,  time_sheet.id AS timesheet_id,job_list.job_name, job_list.job_no
+                            FROM time_sheet INNER JOIN jobseeker ON jobseeker.id=time_sheet.jobseeker_id INNER JOIN job_list ON job_list.id=time_sheet.job_id
+                            WHERE job_list.employer_id=?");
+          $sql->bind_param("i", $companyid);
+
+        $sql->execute();
+        $result = $sql->get_result();
+        $num_of_rows = $result->num_rows;
+        if($num_of_rows>0)
+          {
+              while($row = $result->fetch_assoc()) {
+                    $jobList[$row['job_id']]['job_name']=$row['job_name'];
+                    $jobList[$row['job_id']]['job_id']=$row['job_id'];
+                    $jobList[$row['job_id']]['job_no']=$row['job_no'];
+                    $contract[$row['job_id']][$row['contracts_id']]['timesheet'][]=$row;
+                    $contract[$row['job_id']][$row['contracts_id']]['jobseeker_name']=$row['firstname'];
+                    $contract[$row['job_id']][$row['contracts_id']]['jobseeker_id']=$row['jobseeker_id'];
+                    $contract[$row['job_id']][$row['contracts_id']]['contracts_id']=$row['contracts_id'];
+                }
+          }
+
+          foreach ($jobList as $key => $value) {
+            $rowdata= array();
+            $rowdata['job_name']=$value['job_name'];
+            $rowdata['job_id']=$value['job_id'];
+            $rowdata['job_no']=$value['job_no'];
+            foreach ($contract[$rowdata['job_id']] as $key => $value) {
+              $rowdata['contract'][]=$value;
+            }
+            $timelist['jobs'][]=$rowdata;
+          }
+
+        return $timelist;
+      }
+
+      function GetEmployerContractTimesheetListCom($companyid)
+      {
+        global $db;
+        $DBC=$db::dbconnect();
+        $sql=$DBC->prepare("SELECT time_sheet.*, jobseeker.firstname,  time_sheet.id AS timesheet_id,job_list.job_name, job_list.job_no
+                            FROM time_sheet INNER JOIN jobseeker ON jobseeker.id=time_sheet.jobseeker_id INNER JOIN job_list ON job_list.id=time_sheet.job_id
+                            WHERE job_list.employer_id=?");
+          $sql->bind_param("i", $companyid);
+
+        $sql->execute();
+        $result = $sql->get_result();
+        $num_of_rows = $result->num_rows;
+        if($num_of_rows>0)
+          {
+              while($row = $result->fetch_assoc()) {
+                $TimesheetDataRaw[$row['contracts_id']]['timesheet'][]=$row;
+                $TimesheetDataRaw[$row['contracts_id']]['contracts_id']=$row['contracts_id']  ;
+
+              }
+          }
+
+          $sql=$DBC->prepare("SELECT job_list.id AS job_id, job_list.job_name,job_list.job_no FROM job_list
+                WHERE employer_id=?");
+          $sql->bind_param("i", $companyid);
+          $sql->execute();
+          $result = $sql->get_result();
+          $num_of_rows = $result->num_rows;
+          if($num_of_rows>0)
+            {
+                while($row = $result->fetch_assoc()) {
+                //  $row['contract']=$row[]
+                  $sqldata[]=$row;
+                }
+            }
+
+        return $sqldata;
+        print_r($TimesheetDataRaw);
+        exit;
+
+        return $timelist;
+      }
+
+
       function GetJobContractTimesheetList($jobid,$from,$to,$companyid)
       {
         global $db;

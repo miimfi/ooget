@@ -111,6 +111,54 @@ class controller_Timesheet
       }
     }
 
+    function GetEmployerContractTimesheetList()
+    {
+      // report for get jobseeker's all timesheet based on contracts
+      global $request,$CurrentUser;
+      if($CurrentUser->companyid)
+      {
+        $request['employerid']=$CurrentUser->companyid;
+      }
+      if($request['employerid'])
+      {
+        $result=model_timesheet::GetEmployerContractTimesheetList($request['employerid']);
+        if($result)
+        {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+        }
+        else {
+          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>'timesheet not found'));
+        }
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'invalid input'));
+      }
+    }
+
+    function GetEmployerContractTimesheetListCom()
+    {
+      // report for get jobseeker's all timesheet based on contracts
+      global $request,$CurrentUser;
+      if($CurrentUser->companyid)
+      {
+        $request['employerid']=$CurrentUser->companyid;
+      }
+      if($request['employerid'])
+      {
+        $result=model_timesheet::GetEmployerContractTimesheetListCom($request['employerid']);
+        if($result)
+        {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+        }
+        else {
+          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>'timesheet not found'));
+        }
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'invalid input'));
+      }
+    }
+
     function GetJobseekerContractTimesheetList()
     {
       // report for get jobseeker's all timesheet based on contracts
