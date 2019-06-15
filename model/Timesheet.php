@@ -142,10 +142,6 @@ class model_timesheet
             }
 
         return $sqldata;
-        print_r($TimesheetDataRaw);
-        exit;
-
-        return $timelist;
       }
 
 
@@ -433,6 +429,7 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
 
           function PunchOut($jobseekerid,$timesheet_id)
           {
+
             $today=date("Y-m-d");//set job salary based on day type
                 $salary=$sqldata['jobseeker_salary'];
                 if($sqldata['holiday']=='Y')
@@ -481,6 +478,18 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
               return array('code' => 'timesheet_not_found','data'=>"Timesheet not found" );
             }
 
+            // grace_period check
+            if($sqldata['grace_period']>0)
+            {
+              $Job_in_time=$sqldata['DATE'].' '.$sqldata['start_time'];
+              $grace_in_time=strtotime($Job_in_time)+($sqldata['grace_period']*60);
+              $Check_break_clockin=($sqldata['clock_verified_in']?$sqldata['clock_verified_in']: $sqldata['clock_in']);
+              if($grace_in_time>strtotime($Check_break_clockin))
+              {
+                $sqldata['clock_verified_in']=$Job_in_time;
+              }
+            }
+
             $break_min=0;
             $sql_break = $DBC->prepare("SELECT `from`,`to` FROM  job_break_list WHERE `job_id`=? AND `from`<`to`");
             $sql_break->bind_param("i", $sqldata['job_id']);
@@ -489,10 +498,18 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
             $num_of_rows_break = $result_break->num_rows;
             if($num_of_rows_break>0)
             {
+              $Check_break_clockin=($sqldata['clock_verified_in']?$sqldata['clock_verified_in']: $sqldata['clock_in']);
+              $Check_break_clockout=$now_today;
               while($row = $result_break->fetch_assoc()) {
-                $break_min=$break_min+(strtotime($row['to'])-strtotime($row['from']))/60;
+                if((strtotime($Check_break_clockin)<strtotime($row['to']) && strtotime($Check_break_clockin)<strtotime($row['from'])) && (strtotime($Check_break_clockout)>strtotime($row['to']) && strtotime($Check_break_clockout)>strtotime($row['from'])))
+                {
+                  $break_min=$break_min+(strtotime($row['to'])-strtotime($row['from']))/60;
+                }
+                $break_min_uncount=$break_min_uncount+(strtotime($row['to'])-strtotime($row['from']))/60;
               }
             }
+
+
 
 
             if($sqldata['clock_verified_out'] || $sqldata['clock_out'])
@@ -541,7 +558,7 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
                 }
 
                 // without break
-                $JobWorkingMin=$JobWorkingMin-$break_min;
+                $JobWorkingMin=$JobWorkingMin-$break_min_uncount;
                 $TotalWorkingMin=round((strtotime($now_today)-strtotime(($sqldata['clock_verified_in']?$sqldata['clock_verified_in']:$sqldata['clock_in'])))/60);
 
                 // without break
@@ -560,8 +577,6 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
                 }
 
                 // calculate narmal salary
-
-
                 if($JobWorkingMin<=$TotalWorkingMin)
                 {
                   //working hours is above job hours
@@ -601,7 +616,7 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
                 $timesheetResult['ooget_commision']=$ooget_commision;
 
                 $sql2 = $DBC->prepare("UPDATE `time_sheet` SET `clock_out`=?, `ot_salary`=?, `salary`=?, `salary_total`=?, `total_job_min`=?, `jobseeker_normal_working_min`=?, `jobseeker_ot_working_min`=?, `ooget_commision`=? WHERE  `id`=?");
-                $sql2->bind_param("sdddiiidi", $now_today,$JobseekerOTSalary,$JobseekerSalary,$TotalJobSeekerSalary,$JobWorkingMin,$JobWorkingMin,$JobseekerOTmin,$ooget_commision,$timesheet_id);
+                $sql2->bind_param("sdddiiidi", $now_today,$JobseekerOTSalary,$JobseekerSalary,$TotalJobSeekerSalary,$JobWorkingMin,$NormalWorkingMin,$JobseekerOTmin,$ooget_commision,$timesheet_id);
                 $sql2->execute();
                 $affected_joblist=$sql2->affected_rows;
               }
@@ -648,6 +663,17 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
               return array('code' => 'timesheet_not_found','data'=>"Timesheet not found" );
             }
 
+            // grace_period check
+            if($sqldata['grace_period']>0)
+            {
+              $Job_in_time=$sqldata['DATE'].' '.$sqldata['start_time'];
+              $grace_in_time=strtotime($Job_in_time)+($sqldata['grace_period']*60);
+              $Check_break_clockin=($sqldata['clock_verified_in']?$sqldata['clock_verified_in']: $sqldata['clock_in']);
+              if($grace_in_time>strtotime($Check_break_clockin))
+              {
+                $sqldata['clock_verified_in']=$Job_in_time;
+              }
+            }
 
             $break_min=0;
             $sql_break = $DBC->prepare("SELECT `from`,`to` FROM  job_break_list WHERE `job_id`=? AND `from`<`to`");
@@ -657,8 +683,14 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
             $num_of_rows_break = $result_break->num_rows;
             if($num_of_rows_break>0)
             {
+              $Check_break_clockin=($sqldata['clock_verified_in']?$sqldata['clock_verified_in']: $sqldata['clock_in']);
+              $Check_break_clockout=$now_today;
               while($row = $result_break->fetch_assoc()) {
-                $break_min=$break_min+(strtotime($row['to'])-strtotime($row['from']))/60;
+                if((strtotime($Check_break_clockin)<strtotime($row['to']) && strtotime($Check_break_clockin)<strtotime($row['from'])) && (strtotime($Check_break_clockout)>strtotime($row['to']) && strtotime($Check_break_clockout)>strtotime($row['from'])))
+                {
+                  $break_min=$break_min+(strtotime($row['to'])-strtotime($row['from']))/60;
+                }
+                $break_min_uncount=$break_min_uncount+(strtotime($row['to'])-strtotime($row['from']))/60;
               }
             }
 
@@ -699,7 +731,7 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
                 }
 
                 // without break
-                $JobWorkingMin=$JobWorkingMin-$break_min;
+                $JobWorkingMin=$JobWorkingMin-$break_min_uncount;
 
                 $TotalWorkingMin=round((strtotime($now_today)-strtotime(($sqldata['clock_verified_in']?$sqldata['clock_verified_in']:$sqldata['clock_in'])))/60);
 

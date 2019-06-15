@@ -141,7 +141,7 @@ class controller_Jobseeker
   else {
     if($request['name'] && $request['email'] && $request['password'] && $request['country'] && ($Recaptcha=='success' ||  $Recaptcha=='OFF'))
     {
-      $CheckEmail=model_Jobseeker::CheckEmail($request['email']);
+      $CheckEmail=model_Jobseeker::CheckUnique($request);
       if(!$CheckEmail)
       {
         $result=model_Jobseeker::CreateJobseeker();
