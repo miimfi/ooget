@@ -126,7 +126,7 @@ class model_Jobseeker
     }
     if($id)
     {
-      $sql=$DBC->prepare("UPDATE `jobseeker` SET `status`=?, SET `id_verified`=1 WHERE  `id`=?");
+      $sql=$DBC->prepare("UPDATE `jobseeker` SET `status`=?, `id_verified`=1 WHERE  `id`=?");
       $sql->bind_param("ii", $status,$id);
       $sql->execute();
       return $sql->affected_rows;

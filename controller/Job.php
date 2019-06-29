@@ -268,7 +268,7 @@ class controller_Job
       $result=model_Job::JobApply($CurrentUser->id,$request['jobid']);
       if($result)
       {
-        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'job applide'));
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'job applied'));
       }
       else {
         lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found / job closed / Already Applied'));
