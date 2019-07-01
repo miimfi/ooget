@@ -20,6 +20,16 @@ class model_user
     return $sqldata;
   }
 
+  function UpdatePassword($user_id,$old_pass,$new_pass)
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    $sql=$DBC->prepare("UPDATE `users` SET `password`=? WHERE  `id`=? AND `password`=?");
+    $sql->bind_param("sis", $new_pass,$user_id,$old_pass);
+    $sql->execute();
+    return $sql->affected_rows;
+  }
+
   function DeleteUser($id,$companyid='')
   {
     global $db;

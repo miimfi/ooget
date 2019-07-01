@@ -21,6 +21,37 @@ class controller_Users
       }
   }
 
+  function UpdatePassword()
+  {
+    global $request,$CurrentUser;
+    $user_id=$CurrentUser->id;
+    if($request['oldpassword'] && $request['password'])
+    {
+      $result=model_User::UpdatePassword($user_id,$request['oldpassword'],$request['password']);
+      if($result)
+      {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Password Updated'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid current password'));
+      }
+
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid Password'));
+    }
+  }
+
+  function ForgotPassword()
+  {
+      $to_email = 'doss.powersoft@gmail.com';
+      $subject = 'Testing PHP Mail';
+      $message = 'This mail is sent using the PHP mail function';
+      $headers = 'From: support@doss.sqindia.net';
+      mail($to_email,$subject,$message,$headers);
+    echo "send mail";exit;
+  }
+
   function ImageUpload()
   {
     global $CurrentUser;

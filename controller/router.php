@@ -49,7 +49,7 @@ if($CurrentUser->access=='Jobseeker' && !CheckJobseekerModuleAccess())
   $request['module']='Jobseeker';
 }
 
-if($AuthResult || $request['mode']=='CreateEmployer' || $request['mode']=='Login' || $request['mode']=='CreateJobseeker' || $request['mode']=='CheckCompanyUenExist' || $request['mode']=='CheckEmail' || $request['mode']=='CheckUnique')
+if($AuthResult || $request['mode']=='ForgotPassword' || $request['mode']=='CreateEmployer' || $request['mode']=='Login' || $request['mode']=='CreateJobseeker' || $request['mode']=='CheckCompanyUenExist' || $request['mode']=='CheckEmail' || $request['mode']=='CheckUnique')
 {
   $Modules;
   if($request['module'])

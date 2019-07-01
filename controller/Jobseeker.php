@@ -190,6 +190,27 @@ class controller_Jobseeker
     }
   }
 
+  function UpdatePassword()
+  {
+    global $request,$CurrentUser;
+    $user_id=$CurrentUser->id;
+    if($request['oldpassword'] && $request['password'])
+    {
+      $result=model_Jobseeker::UpdatePassword($user_id,$request['oldpassword'],$request['password']);
+      if($result)
+      {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Password Updated'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid current password'));
+      }
+
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid Password'));
+    }
+  }
+
   function UpdateJobseeker()
   {
     global $request,$CurrentUser;
