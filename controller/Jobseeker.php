@@ -14,7 +14,7 @@ class controller_Jobseeker
       $result=model_Jobseeker::IdVerifiedUpdate($request['jobseekerid'],$request['status']);
       if($result)
       {
-        lib_ApiResult::JsonEncode(array('status'=>500,'success'=>true,'message'=>'updated'));
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'updated'));
       }
       else {
         lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'Update error'));
@@ -34,7 +34,7 @@ class controller_Jobseeker
       $result=model_Jobseeker::ResetNRIC($request['jobseekerid']);
       if($result)
       {
-        lib_ApiResult::JsonEncode(array('status'=>500,'success'=>true,'message'=>'NRIC Removed'));
+        lib_ApiResult::JsonEncode(array('status'=>200,'success'=>true,'message'=>'NRIC Removed'));
       }
       else {
         lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'Update error'));
