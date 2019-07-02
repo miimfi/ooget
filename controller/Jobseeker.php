@@ -25,6 +25,26 @@ class controller_Jobseeker
     }
   }
 
+  function ResetNRIC()
+  {
+    isAdmin();
+    global $request;
+    if($request['jobseekerid'])
+    {
+      $result=model_Jobseeker::ResetNRIC($request['jobseekerid']);
+      if($result)
+      {
+        lib_ApiResult::JsonEncode(array('status'=>500,'success'=>true,'message'=>'NRIC Removed'));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'Update error'));
+      }
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>500,'success'=>false,'message'=>'jobseeker id not found'));
+    }
+  }
+
   function ImageUpload()
   {
     global $CurrentUser,$request;
