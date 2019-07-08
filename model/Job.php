@@ -355,6 +355,7 @@ class model_Job
     function JobApply($JobseekerId,$Jobid)
     {
       global $db;
+	    $result_status=0;
       $DBC=$db::dbconnect();
       $jobDetail=model_Job::GetJobDetails($Jobid);
       $CheckAlreadyApplied=model_Job::CheckJobseekerWorkingHours($JobseekerId,$jobDetail['to']);
@@ -370,13 +371,21 @@ class model_Job
         $sql->bind_param("iiss", $jobDetail['id'],$JobseekerId,$applied_on,$offered_on);
         $sql->execute();
         $insertId=$sql->insert_id;
+		    if($insertId>0)
+		    {
+			       $result_status=1;
+			       if($jobDetail['auto_offered']==1)
+			          {
+				           $result_status=2;
+			          }
+			       if($jobDetail['auto_accepted']==1)
+			          {
+				           $JobAccept_status=model_Job::JobAccept($JobseekerId,$insertId);
+				           $result_status=3;
+			          }
+		}
 
-        if($jobDetail['auto_accepted']==1 && $insertId>0)
-        {
-          $JobAccept_status=model_Job::JobAccept($insertId);
-
-        }
-        return $insertId;
+        return $result_status;
       }
       else {
           return false;
@@ -643,10 +652,11 @@ class model_Job
     function GetJobseekerContractList($JobseekerId)
     {
       global $db;
+	    $today=date("Y-m-d");
       $DBC=$db::dbconnect();
-      $sql = $DBC->prepare("SELECT contracts.*, job_list.job_name, job_list.project_name, job_list.`status` AS job_status, company.`name` AS company_name  FROM  contracts
+      $sql = $DBC->prepare("SELECT contracts.*, job_list.job_name, job_list.project_name, job_list.`status` AS job_status, company.`name` AS company_name, job_list.`to` AS job_end  FROM  contracts
       INNER JOIN job_list ON job_list.id=contracts.job_id INNER JOIN company ON job_list.employer_id=company.id
-      WHERE  contracts.offer_accepted IS NOT NULL AND contracts.jobseeker_id=?");
+	    WHERE  contracts.offer_accepted IS NOT NULL AND contracts.jobseeker_id=?");
       $sql->bind_param("i", $JobseekerId);
       $sql->execute();
       $result = $sql->get_result();
@@ -654,7 +664,12 @@ class model_Job
       if($num_of_rows>0)
       {
         while($row = $result->fetch_assoc()) {
-          $sqldata[] = $row;
+			        $end_date=date("Y-m-d",strtotime($row['job_end']));
+			        if($today>$end_date)
+			          {
+				            $row['deleted']=1;
+			          }
+              $sqldata[] = $row;
         }
       }
       return $sqldata;

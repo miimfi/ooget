@@ -66,12 +66,63 @@ class model_user
     $sql2 = $DBC->prepare("UPDATE `users` SET `imgpath`=? WHERE  `id`=?");
     $sql2->bind_param("si", $ImagePath,$id);
     $sql2->execute();
+    return $sql2->affected_rows;
+  }
+
+  function ForgotPassword($email)
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    $sql = $DBC->prepare("SELECT `id`,`firstname`,`lastname`,`email`,`status`,`lastlogin`  FROM `users` WHERE `status`=1 AND `email`=?");
+    $sql->bind_param("s", $email);
+    $sql->execute();
+    $result = $sql->get_result();
+    $num_of_rows = $result->num_rows;
+    if($num_of_rows>0)
+    {
+      while($row = $result->fetch_assoc()) {
+        $sqldata = $row;
+      }
+    }
+    $key=model_User::randomKey();
+    $sql = $DBC->prepare("UPDATE `users` SET `forgot_password_key`=? WHERE  `id`=?");
+    $sql->bind_param("ss", $key,$sqldata['id']);
+    $sql->execute();
+    if($sql->affected_rows>0)
+    {
+      $sqldata['key']=$key;
+      return $sqldata;
+    }
+    else {
+      return false;
+    }
+
+  }
+
+  function ForgotPasswordUpdate($Key,$EmailId,$Password)
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    $date = date('Y-m-d H:i:s');
+    $sql = $DBC->prepare("UPDATE `users` SET `lastlogin`=?, `password`=?, `forgot_password_key`=null WHERE `email`=? AND `forgot_password_key`=?");
+    $sql->bind_param("ssss", $date,$Password,$EmailId,$Key);
+    $sql->execute();
     return $sql->affected_rows;
+  }
+
+  function randomKey() {
+    $alphabet = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
+    $pass = array(); //remember to declare $pass as an array
+    $alphaLength = strlen($alphabet) - 1; //put the length -1 in cache
+    for ($i = 0; $i < 20; $i++) {
+        $n = rand(0, $alphaLength);
+        $pass[] = $alphabet[$n];
+    }
+    return implode($pass); //turn the array into a string
   }
 
   function CheckEmail($email)
   {
-    global $request;
     global $db;
     $DBC=$db::dbconnect();
     $sql = $DBC->prepare("SELECT `email` FROM users WHERE email =?");

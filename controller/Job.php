@@ -18,12 +18,6 @@ class controller_Job
     else {
       $request['status']=2;
     }
-
-    foreach ($request as $key => $value) {
-      if($value='' )
-      echo $key;
-    }
-    //echo $request['job_name'] ." # ". $request['department'] ." # ". $request['employment_type'] ." # ". $request['description'] ." # ". $request['specializations'] ." # ". $request['working_environment'] ." # ". $request['pax_total'] ." # ". $request['grace_period'] ." # ". $request['over_time_rounding'] ." # ". $request['over_time_minimum'] ." # ". $request['from'] ." # ". $request['to'] ." # ". $request['start_time'] ." # ". $request['end_time'] ." # ". $request['work_days_type'] ." # ". $request['postal_code'] ." # ". $request['address'] ." # ". $request['unit_no'] ." # ". $request['region'] ." # ". $request['employer_id'] ." # ". $request['location'] ." # ". $request['charge_rate'] ." # ". $request['markup_rate'] ." # ". $request['markup_in'] ." # ". $request['jobseeker_salary'] ." # ". $request['markup_amount'] ." # ". $request['project_name'];
     if($request['job_name'] && $request['department'] && $request['employment_type'] && $request['description'] && $request['specializations'] && $request['working_environment'] && $request['pax_total'] && $request['grace_period'] && $request['over_time_rounding'] && $request['over_time_minimum'] && $request['from'] && $request['to'] && $request['start_time'] && $request['end_time'] && $request['work_days_type'] && $request['postal_code'] && $request['address'] && $request['unit_no'] && $request['region'] && $request['employer_id'] && $request['location'] && $request['project_name'])
     {
       $result=model_Job::CreateJob($request);
@@ -268,7 +262,7 @@ class controller_Job
       $result=model_Job::JobApply($CurrentUser->id,$request['jobid']);
       if($result)
       {
-        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'job applied'));
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
       }
       else {
         lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found / job closed / Already Applied'));

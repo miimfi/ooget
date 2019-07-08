@@ -431,30 +431,6 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
           {
 
             $today=date("Y-m-d");//set job salary based on day type
-                $salary=$sqldata['jobseeker_salary'];
-                if($sqldata['holiday']=='Y')
-                {
-                  $salary=$salary*$HolidaySalary;
-                }
-                if($sqldata['holiday']=='P')
-                {
-                  $salary=$salary*$PublicHolidaySalary;
-                }
-                $salaryPerMini=$salary/60;
-
-                //set OT salary
-                $OTsalary=$sqldata['jobseeker_salary'];
-                if($sqldata['holiday']=='Y')
-                {
-                  $OTsalary=$OTsalary*$HolidayOTSalary;
-                }elseif($sqldata['holiday']=='P')
-                {
-                  $OTsalary=$OTsalary*$PublicHolidayOTSalary;
-                }
-                else {
-                  $OTsalary=$OTsalary*$OverTimetSalary;
-                }
-                $OTsalaryMin=$OTsalary/60;
             $now_today=date("Y-m-d H:i:s");
             $yesterday=date('Y-m-d', strtotime('-1 days'));
             $nextday=date('Y-m-d', strtotime('+1 days'));
@@ -928,7 +904,174 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
 
           function TimesheetSalaryGen($id)
           {
+            $today=date("Y-m-d");
+            $now_today=$outtime;
+            $yesterday=date('Y-m-d', strtotime('-1 days'));
+            $nextday=date('Y-m-d', strtotime('+1 days'));
 
+            // get job details
+            global $db,$MinimumWorkingHours,$BeforePunchIn,$HolidaySalary,$PublicHolidaySalary,$OverTimetSalary,$HolidayOTSalary,$PublicHolidayOTSalary,$WorkingHoursRound;
+            $DBC=$db::dbconnect();
+            $sql = $DBC->prepare("SELECT time_sheet.job_id,
+              time_sheet.clock_verified_in, time_sheet.holiday, job_list.markup_amount, time_sheet.clock_verified_out, time_sheet.clock_in, time_sheet.clock_out, job_list.start_time, job_list.end_time, time_sheet.DATE, job_list.grace_period,job_list.over_time_rounding,job_list.over_time_minimum,job_list.work_days_type,job_list.jobseeker_salary
+              FROM time_sheet INNER JOIN contracts ON contracts.id = time_sheet.contracts_id INNER JOIN job_list ON job_list.id = contracts.job_id
+              WHERE time_sheet.`id`=? AND (time_sheet.`clock_in` IS NOT NULL OR time_sheet.`clock_verified_in` IS NOT NULL)");
+            $sql->bind_param("i", $timesheet_id);
+            $sql->execute();
+            $result = $sql->get_result();
+            $num_of_rows = $result->num_rows;
+            if($num_of_rows>0)
+            {
+              while($row = $result->fetch_assoc()) {
+                $sqldata= $row;
+              }
+            }else {
+              return array('code' => 'timesheet_not_found','data'=>"Timesheet not found" );
+            }
+
+            // grace_period check
+            if($sqldata['grace_period']>0)
+            {
+              $Job_in_time=$sqldata['DATE'].' '.$sqldata['start_time'];
+              $grace_in_time=strtotime($Job_in_time)+($sqldata['grace_period']*60);
+              $Check_break_clockin=($sqldata['clock_verified_in']?$sqldata['clock_verified_in']: $sqldata['clock_in']);
+              if($grace_in_time>strtotime($Check_break_clockin))
+              {
+                $sqldata['clock_verified_in']=$Job_in_time;
+              }
+            }
+
+            $break_min=0;
+            $sql_break = $DBC->prepare("SELECT `from`,`to` FROM  job_break_list WHERE `job_id`=? AND `from`<`to`");
+            $sql_break->bind_param("i", $sqldata['job_id']);
+            $sql_break->execute();
+            $result_break = $sql_break->get_result();
+            $num_of_rows_break = $result_break->num_rows;
+            if($num_of_rows_break>0)
+            {
+              $Check_break_clockin=($sqldata['clock_verified_in']?$sqldata['clock_verified_in']: $sqldata['clock_in']);
+              $Check_break_clockout=$now_today;
+              while($row = $result_break->fetch_assoc()) {
+                if((strtotime($Check_break_clockin)<strtotime($row['to']) && strtotime($Check_break_clockin)<strtotime($row['from'])) && (strtotime($Check_break_clockout)>strtotime($row['to']) && strtotime($Check_break_clockout)>strtotime($row['from'])))
+                {
+                  $break_min=$break_min+(strtotime($row['to'])-strtotime($row['from']))/60;
+                }
+                $break_min_uncount=$break_min_uncount+(strtotime($row['to'])-strtotime($row['from']))/60;
+              }
+            }
+
+                //set job salary based on day type
+                $salary=$sqldata['jobseeker_salary'];
+                if($sqldata['holiday']=='Y')
+                {
+                  $salary=$salary*$HolidaySalary;
+                }
+                if($sqldata['holiday']=='P')
+                {
+                  $salary=$salary*$PublicHolidaySalary;
+                }
+                $salaryPerMini=$salary/60;
+
+                //set OT salary
+                $OTsalary=$sqldata['jobseeker_salary'];
+                if($sqldata['holiday']=='Y')
+                {
+                  $OTsalary=$OTsalary*$HolidayOTSalary;
+                }elseif($sqldata['holiday']=='P')
+                {
+                  $OTsalary=$OTsalary*$PublicHolidayOTSalary;
+                }
+                else {
+                  $OTsalary=$OTsalary*$OverTimetSalary;
+                }
+
+                $OTsalaryMin=$OTsalary/60;
+
+                $TotalWorkingMin=0;$JobWorkingMin=0;
+                if(strtotime($sqldata['end_time'])>strtotime($sqldata['start_time']))
+                {
+                    $JobWorkingMin=(strtotime($sqldata['end_time'])-strtotime($sqldata['start_time']))/60;
+                }
+                else {
+                  $JobWorkingMin=((strtotime($sqldata['end_time']+86400))-strtotime($sqldata['start_time']))/60;
+                }
+
+                // without break
+                $JobWorkingMin=$JobWorkingMin-$break_min_uncount;
+
+                $TotalWorkingMin=round((strtotime($now_today)-strtotime(($sqldata['clock_verified_in']?$sqldata['clock_verified_in']:$sqldata['clock_in'])))/60);
+
+                // without break
+                $TotalWorkingMin=$TotalWorkingMin-$break_min;
+
+                //ot time calculation
+                $JobseekerOTmin=0;
+                if(($JobWorkingMin+$sqldata['over_time_minimum'])<=$TotalWorkingMin)
+                {
+                  $JobseekerOTmin=$TotalWorkingMin-$JobWorkingMin;
+                  if($sqldata['over_time_rounding'])
+                  {
+                    $OTnonecountmin=$JobseekerOTmin%$sqldata['over_time_rounding']; // over time round
+                    $JobseekerOTmin=$JobseekerOTmin-$OTnonecountmin;
+                  }
+                }
+
+                // calculate narmal salary
+
+
+                if($JobWorkingMin<=$TotalWorkingMin)
+                {
+                  //working hours is above job hours
+                  $NormalWorkingMin=$JobWorkingMin;
+                  $JobseekerSalary=$NormalWorkingMin*$salaryPerMini;
+                }
+                else {
+                  // below job hours
+                  if($WorkingHoursRound)
+                  {
+                    $normalMinnonecount=0;
+                    $normalMinnonecount=$TotalWorkingMin%$WorkingHoursRound;
+                    $TotalWorkingMin=$TotalWorkingMin-$normalMinnonecount;
+                    $NormalWorkingMin=$TotalWorkingMin;
+                  }
+                  $JobseekerSalary=$TotalWorkingMin*$salaryPerMini;
+                }
+
+                $JobseekerOTSalary=$JobseekerOTmin*$OTsalaryMin;
+                $TotalJobSeekerSalary=$JobseekerOTSalary+$JobseekerSalary;
+
+                // ooget commision
+                $MarkupAmountPer=($sqldata['markup_amount']/($salary+$sqldata['markup_amount']))*100;
+                $salaryPer=100-$MarkupAmountPer;
+                $salary1per=$TotalJobSeekerSalary/$salaryPer;
+                $ooget_commision=$salary1per*$MarkupAmountPer;
+                $EmployerCharge=$ooget_commision+$TotalJobSeekerSalary;
+
+                $timesheetResult['PunchOut']=$now_today;
+                $timesheetResult['Salary']=$salary;
+                $timesheetResult['SlaryPerMini']=$salaryPerMini;
+                $timesheetResult['OTslaryMini']=$OTsalaryMin;
+                $timesheetResult['TotalWorkingmin']=$TotalWorkingMin;
+                $timesheetResult['NormalWorkingmin']=$NormalWorkingMin;
+                $timesheetResult['JobWorkingMin']=$JobWorkingMin;
+                $timesheetResult['OTTimeMin']=$JobseekerOTmin;
+                $timesheetResult['JobseekerSalary']=$JobseekerSalary;
+                $timesheetResult['JobseekerOTSalary']=$JobseekerOTSalary;
+                $timesheetResult['TotalJobSeekerSalary']=$TotalJobSeekerSalary;
+                $timesheetResult['MarkupAmount']=$sqldata['markup_amount'];
+                $timesheetResult['ooget_commision']=$ooget_commision;
+                $timesheetResult['EmployerCharge']=$EmployerCharge;
+
+                $sql2 = $DBC->prepare("UPDATE `time_sheet` SET `clock_verified_out`=?, `ot_salary`=?, `salary`=?, `salary_total`=?,`clock_out_verified_by`=?, `total_job_min`=?, `jobseeker_normal_working_min`=?, `jobseeker_ot_working_min`=?, `ooget_commision`=? WHERE  `id`=?");
+                $sql2->bind_param("sdddiiiidi", $now_today,$JobseekerOTSalary,$JobseekerSalary,$TotalJobSeekerSalary,$userid,$JobWorkingMin,$NormalWorkingMin,$JobseekerOTmin,$ooget_commision,$timesheet_id);
+                $sql2->execute();
+                $affected_joblist=$sql2->affected_rows;
+              if($affected_joblist>0)
+              {
+                return array('code' => 'success','data'=>$timesheetResult );
+              }else {
+                return array('code' => 'Update_error','data'=>'server error' );
+              }
           }
 
 }

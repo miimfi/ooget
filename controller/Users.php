@@ -1,6 +1,7 @@
 <?php
 include_once('model/User.php');
 use \Firebase\JWT\JWT;
+include_once('lib/mail/sendMail.php');
 class controller_Users
 {
   function CheckEmail()
@@ -44,12 +45,64 @@ class controller_Users
 
   function ForgotPassword()
   {
-      $to_email = 'doss.powersoft@gmail.com';
-      $subject = 'Testing PHP Mail';
-      $message = 'This mail is sent using the PHP mail function';
-      $headers = 'From: support@doss.sqindia.net';
-      mail($to_email,$subject,$message,$headers);
-    echo "send mail";exit;
+    global $website_Name,$request,$ForgotPasswordReturnURL;
+
+    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,5})$^", $request['email'])){
+              lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid email'));
+      }
+
+    $key=model_User::ForgotPassword($request['email']);
+    //print_r($key);exit;
+    if(is_array($key))
+    {
+      $mail_data=new SMTPMailer;
+      //$mail_data->from_ID=;
+      //$mail_data->reply_ID=;
+      $mail_data->to_ID=array('id' =>$key['email'] ,'name'=>$key['firstname'].' '.$key['lastname']);
+      //$mail_data->cc_ID=;
+      //$mail_data->bcc_ID=;
+      $mail_data->subject=$website_Name."- Password recovery Mail";
+      $mail_body_test="<h3>Hi ".$key['firstname'].' '.$key['lastname'].",</h3>";
+      $mail_body_test.='<br><br> Your last login time : '.$key['lastlogin'];
+      $mail_body_test.='<br><a href="'.$ForgotPasswordReturnURL.'?key='.$key['key'].'&email='.$key['email'].'">Please click to reset your password</a><br>';
+      $mail_data->body=$mail_body_test;
+      $mail_data->plain_text=" ";
+      $result = $mail_data->SendMail();
+      if($result['status'])
+      {
+        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Please check on your mail :'.$key['email']));
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Server error, Please try later'));
+      }
+
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid email'));
+    }
+
+  }
+
+  function ForgotPasswordUpdate()
+  {
+    global $request;
+    if($request['key'] && $request['mail'] && $request['password'])
+    {
+      $result=model_User::ForgotPasswordUpdate($request['key'],$request['mail'],$request['password']);
+      if($result)
+      {
+          $request['email']=$request['mail'];
+          $request['password']=$request['password'];
+          controller_Users::Login();
+      }
+      else {
+        lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid input'));
+      }
+
+    }
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>401,'result'=>'Invalid input'));
+    }
   }
 
   function ImageUpload()
@@ -140,10 +193,8 @@ class controller_Users
             lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'your not allow to create admin user, because your not OOGET admin'));
           }
         }
-        else {
-          $request['companyid']=0;
-        }
-        if($request['name'] && $request['password'] && (($request['companyid']>0 && $request['type']!='admin') || $request['type']=='admin') && $request['email'])
+
+        if($request['name'] && $request['password'] && ($request['companyid']>0 || $request['type']=='admin') && $request['email'])
         {
           $CheckEmail=model_User::CheckEmail($request['email']); //check email id
           $CheckEmployer=model_Employer::GetEmployer($request['companyid']);
@@ -164,10 +215,10 @@ class controller_Users
             }
           }
           else {
-            lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Email id already exist'));
+            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>'Email id already exist'));
           }
         }else {
-          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Please fill all mandatory fields'));
+          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>'Please fill all mandatory fields'));
         }
     }
   }
