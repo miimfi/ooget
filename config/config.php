@@ -1,11 +1,13 @@
 <?php
+ // time zone
+ date_default_timezone_set('Asia/Singapore');
 global $dbconfig, $ServerRequestLog, $ServerResponseLog, $ServerQuaryLog, $ErrorLog, $request, $db, $ServerURL, $JWTKey, $JWTExpirationTime, $SecretKey, $Recaptcha,$website_Name;
 
 // DB Config
 $dbconfig['db_server'] = '127.0.0.1';
 $dbconfig['db_port'] = '3306';
-$dbconfig['db_username'] = 'doss';
-$dbconfig['db_password'] = 'rootroot';
+$dbconfig['db_username'] = 'ooget';
+$dbconfig['db_password'] = 'ooget123****';
 $dbconfig['db_name'] = 'ooget';
 $dbconfig['db_hostname'] = $dbconfig['db_server'].':'.$dbconfig['db_port'];
 

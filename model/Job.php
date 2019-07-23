@@ -212,6 +212,18 @@ class model_Job
         $DBC=$db::dbconnect();
         if($JobseekerId>0)
         {
+            $get_contract= $DBC->prepare("SELECT *, `id` as contract_id FROM contracts WHERE `job_id`=? AND `jobseeker_id`=?");
+            $get_contract->bind_param("ii", $id,$JobseekerId);
+            $get_contract->execute();
+            $get_contract_result = $get_contract->get_result();
+            $get_contract_num_of_rows = $get_contract_result->num_rows;
+            if($get_contract_num_of_rows>0)
+            {
+              while($row = $get_contract_result->fetch_assoc()) {
+               $AppliedData = $row;
+                }
+             }
+/*
             $applied_detailes=model_Job::GetAppliedList($JobseekerId,$id);
             if(is_array($applied_detailes[0]))
             {
@@ -220,7 +232,7 @@ class model_Job
               $AppliedData['offer_rejected']=$applied_detailes[0]['offer_rejected'];
               $AppliedData['offer_accepted']=$applied_detailes[0]['offer_accepted'];
               $AppliedData['contract_id']=$applied_detailes[0]['id'];
-            }
+            }*/
 
             $SavedDetails=model_Job::GetSaveJobList($JobseekerId);
             //print_r($SavedDetails);exit;
@@ -385,10 +397,18 @@ class model_Job
 			          }
 		}
 
-        return $result_status;
+        return array('status' =>true , 'data'=>$result_status);
       }
       else {
-          return false;
+          if($CheckAlreadyApplied)
+          {
+            return array('status' =>false , 'data'=>'conflictjob' );
+          }
+          else
+          {
+            return false;
+          }
+          
       }
     }
 
@@ -568,7 +588,7 @@ class model_Job
       global $db;
       $DBC=$db::dbconnect();
       $select_query="SELECT contracts.*, job_list.work_days_type, company.id AS employer_id,job_list.grace_period, jobseeker.phone as jobseeker_phone, jobseeker.account_no, company.companycode,job_list.pax_total,job_list.required,job_list.job_no,job_list.project_name, job_list.employment_type, job_list.location, job_list.job_name, job_list.department, job_list.`specializations`, company.imgpath as companylogo, job_list.jobseeker_salary, job_list.`status` AS job_status, job_list.from as job_start_date, job_list.to as job_end_date, job_list.start_time as job_start_time, job_list.end_time as job_end_time,  job_list.recruitment_open, jobseeker.firstname as jobseeker_name, jobseeker.email as jobseeker_email, company.`name` as employer_name from `contracts` INNER JOIN job_list ON job_list.id=contracts.job_id INNER JOIN jobseeker ON jobseeker.id=contracts.jobseeker_id INNER JOIN company ON company.id=job_list.employer_id WHERE ";
-      $select_query_post=" AND `deleted`!=1 AND contracts.offer_accepted IS NOT NULL ";
+      $select_query_post=" AND `deleted`!=1 ";
 
       //null, contract_id, job_id, jobseeker_id, companyid
 
@@ -617,7 +637,6 @@ class model_Job
           $sql = $DBC->prepare($select_query." `deleted`!=1 AND contracts.offer_accepted IS NOT NULL ");
         }
       }
-
       $sql->execute();
       $result = $sql->get_result();
       $num_of_rows = $result->num_rows;
@@ -728,5 +747,24 @@ class model_Job
       $insertId=$sql->insert_id;
       return $insertId;
     }
+
+
+    // Updated By Sivaraj
+    function DeleteJob($id,$companyid='')
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    if($companyid>0)
+    {
+      $sql=$DBC->prepare("DELETE FROM `job_list` WHERE  `id`=? and `employer_id`=?");
+      $sql->bind_param("ii", $id,$companyid);
+    }
+    else {
+      $sql=$DBC->prepare("DELETE FROM `job_list` WHERE  `id`=?");
+      $sql->bind_param("i", $id);
+    }
+    $sql->execute();
+    return $sql->affected_rows;
+  }
 
 }

@@ -358,6 +358,7 @@ INNER JOIN company ON company.id=job_list.employer_id WHERE time_sheet.`jobseeke
             {
                 return array('contract_status' => $contract_status,'result'=> $CurrentDayJob,'job_time'=>$jobtime);
             }elseif ($CurrentDayJob[0] && strtotime($sqldata['start_time'])>strtotime("+".$BeforePunchIn." minutes")){
+
               return array('contract_status' => $contract_status,'result'=> "Your job start at today - ".$sqldata['start_time'],'job_time'=>$jobtime);
             }
             else

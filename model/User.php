@@ -183,5 +183,32 @@ class model_user
 
     return $sqldata;
   }
+
+
+
+  // Updated by sivaraj
+
+   function CheckEmailForUpdate($email)
+  {
+    global $db;
+    $DBC=$db::dbconnect();
+    $sql = $DBC->prepare("SELECT `email` FROM users WHERE email =? AND id != ?");
+    $sql->bind_param("si", $email, $user_id);
+    $sql->execute();
+    $sqldata =$sql->get_result()->fetch_assoc();
+    return $sqldata;
+  }
+
+
+  function UpdateUser($request)
+  {
+    global $CurrentUser;
+    global $db;
+    $DBC=$db::dbconnect();
+    $sql=$DBC->prepare("UPDATE `users` SET `firstname`=?, `email`=?,`password`=?,`type`=?,`role`=? WHERE `id`=?");
+    $sql->bind_param("ssssii",$request['name'],$request['email'],$request['password'],$request['type'],$request['role'],$request['user_id']);
+    $sql->execute();        
+    return $sql->affected_rows;        
+  }
 }
  ?>
