@@ -315,4 +315,57 @@ class controller_Users
     }
   }
 
+
+
+
+
+// Updated by sivaraj
+  
+  function UpdateUser()
+  {
+    require_once('model/Employer.php');
+    global $request,$CurrentUser;
+    if(!preg_match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$^", $request['email'])){
+              lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'Invalid email'));
+      }
+      else {        
+        if($CurrentUser->access!='admin')
+        {
+          $request['companyid']=$CurrentUser->companyid;
+          if($request['type']=='admin')
+          {
+            lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'your not allow to create admin user, because your not OOGET admin'));
+          }
+        }
+
+        if($request['name'] && $request['password'] && ($request['companyid']>0 || $request['type']=='admin') && $request['email'])
+        {
+
+          $CheckEmail=model_User::CheckEmailForUpdate($request['email'], $request['user_id']); //check email id
+          $CheckEmployer=model_Employer::GetEmployer($request['companyid']);
+          if(!is_array($CheckEmployer))
+          {
+            // check if company is found
+            lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'company not found'));
+          }
+          if(!$CheckEmail)
+          {
+            $result=model_User::UpdateUser($request);            
+            if($result>0)
+            {
+              lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'User Updated'));
+            }
+            else {
+              lib_ApiResult::JsonEncode('error');
+            }
+          }
+          else {
+            lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>'Email id already exist'));
+          }
+        }else {echo 3; exit;
+          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'result'=>'Please fill all mandatory fields'));
+        }
+    }
+  }
+
 }

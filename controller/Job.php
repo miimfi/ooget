@@ -262,10 +262,18 @@ class controller_Job
       $result=model_Job::JobApply($CurrentUser->id,$request['jobid']);
       if($result)
       {
-        lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result));
+        if($result['status'])
+        {
+          lib_ApiResult::JsonEncode(array('status'=>200,'result'=>$result['data']));  
+        }
+        else
+        {
+          lib_ApiResult::JsonEncode(array('status'=>200,'success'=>false,'message'=>$result['data']));
+        }
+        
       }
       else {
-        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found / job closed / Already Applied'));
+        lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'Job id not found / job closed / Already Applied='.$result));
       }
     }
     else {
@@ -339,6 +347,11 @@ class controller_Job
     {
       $request['companyid']=$CurrentUser->companyid;
     }
+    if($CurrentUser->access=="Jobseeker")
+    {
+      $request['jobseekerid']=$CurrentUser->id;
+    }
+    
     $result=model_Job::GetContractList($request);
     if(is_array($result))
     {
@@ -417,6 +430,34 @@ class controller_Job
     else {
       lib_ApiResult::JsonEncode(array('status'=>500,'result'=>'only for jobseekers'));
     }
+  }
+
+
+
+// Updated By Sivaraj
+  function DeleteJob()
+  {
+    global $request,$CurrentUser;
+    if($CurrentUser->access!='admin' && $CurrentUser->access!='employer' )
+    {
+      lib_ApiResult::JsonEncode(array('status'=>403,'result'=>'your not allow to delete'));
+    }      
+
+    if($CurrentUser->access!='admin')
+    {
+        if($CurrentUser->companyid>0)
+        {
+          $request['companyid']=$CurrentUser->companyid;
+        }       
+    }
+    
+    $result =model_Job::DeleteJob($request['jobid'],$request['companyid']);    
+    if($result)
+    {lib_ApiResult::JsonEncode(array('status'=>200,'result'=>'deleted'));}
+    else {
+      lib_ApiResult::JsonEncode(array('status'=>400,'result'=>'Invalid job id'));
+    }
+    
   }
 
 }

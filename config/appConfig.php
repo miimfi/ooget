@@ -37,8 +37,10 @@ $Jobseeker_Allow_Module= array(
   array('module' => 'Job','mode'=>'GetJobDetails'),
   array('module' => 'Job','mode'=>'SaveJob'),
   array('module' => 'Job','mode'=>'RemoveSavedJob'),
-  array('module' => 'Timesheet','mode'=>'GetTimeSheet'),
+  array('module' => 'Job','mode'=>'ApplideReject'),
+  array('module' => 'Job','mode'=>'GetContractList'),
   array('module' => 'Job','mode'=>'GetJobseekerContractList'),
+  array('module' => 'Timesheet','mode'=>'GetTimeSheet'),
   array('module' => 'Timesheet','mode'=>'GetTodayJobseekerTimeSheet'),
   array('module' => 'Timesheet','mode'=>'PunchIn'),
   array('module' => 'Timesheet','mode'=>'PunchOut'),
@@ -46,6 +48,7 @@ $Jobseeker_Allow_Module= array(
   array('module' => 'Job','mode'=>'MatchedJob'),
   array('module' => 'Terms','mode'=>'GetTerms'),
   array('module' => 'Timesheet','mode'=>'GetJobseekerContractTimesheetList')
+  
 );
 
 
